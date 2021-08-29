@@ -20,3 +20,4 @@ git push -u origin master
 ``` 
 
 ### shape file in gps(lat, lon)
+[!image](https://github.com/wowyunDBL/mapping_explorer/blob/master/image/RGBD-point_cloud.png)
