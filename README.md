@@ -21,3 +21,8 @@ git push -u origin master
 
 ### shape file in gps(lat, lon)
 ![image](https://github.com/wowyunDBL/mapping_explorer/blob/master/image/RGBD-point_cloud.png)
+
+https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/
+
+### teach you how to write argument
+https://www.pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/

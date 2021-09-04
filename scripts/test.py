@@ -1,21 +1,4 @@
-'''math tool'''
-import csv
-import numpy as np
-from scipy.spatial import distance as dist
-
-'''plot tool'''
-import matplotlib.pyplot as plt
-
-'''image tool'''
-import cv2
-import statistics as sta
-
-import utm
-from pyproj import Proj
-import sys
-if sys.platform.startswith('linux'): # or win
-    print("in linux")
-    file_path = "/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/0906_demo_data/5/"
+file_path = "/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/0906_demo_data/10/"
 
 ''' show raw data '''
 npDepth = np.load(file_path+"depth.npy")
@@ -164,13 +147,13 @@ center_utm_ref = np.load(file_path_map+'center_utm_ref.npy')
 
 cX_utm_ref = center_utm_ref[0,:]
 cY_utm_ref = center_utm_ref[1,:]
-fig4 = plt.figure(figsize=(8,8))
-plt.scatter(cX_utm_ref, cY_utm_ref, c='g', label='reference landmarks', marker='X',s=100)
-# plt.scatter(utm_x_ref, utm_y_ref, label='start_recording',c='black')
-plt.axis('equal')
-plt.title('global map in UTM', fontsize=15)
-plt.legend()
-plt.draw()
+# fig4 = plt.figure(figsize=(8,8))
+# plt.scatter(cX_utm_ref, cY_utm_ref, c='g', label='reference landmarks', marker='X',s=100)
+# # plt.scatter(utm_x_ref, utm_y_ref, label='start_recording',c='black')
+# plt.axis('equal')
+# plt.title('global map in UTM', fontsize=15)
+# plt.legend()
+# plt.draw()
 
 ''' find rigid transformation '''
 P = center_utm_ref
@@ -249,8 +232,6 @@ while resid_scalar > 1:
     resid_scalar = residuals.sum()
     print("residual = ",resid_scalar)
     U = U_new
-    utm_x_loc = utm_loc_new[0][0]
-    utm_y_loc = utm_loc_new[1][0]
     print("iteration time: ", count)
     if count>4:
         print("iterate over 5 times!!")
@@ -260,19 +241,17 @@ while resid_scalar > 1:
 traj = np.load('/home/ncslaber/109-2/210725_NTU_leftAreaLibrary/ntu_test2_2021-07-25-17-42-59/traj_GPS_filtered.npy')
 traj_x = traj[0,:]
 traj_y = traj[1,:]
-fig5 = plt.figure(figsize=(15,15))
-plt.scatter(cX_utm_ref, cY_utm_ref, c='g', label='ref landmarks', marker='X',s=700)
+fig5 = plt.figure(figsize=(7,5))
+plt.scatter(cX_utm_ref, cY_utm_ref, c='g', label='ref landmarks', marker='X',s=100)
 # plt.scatter(utm_x_ref, utm_y_ref, label='start_recording',c='black')
-plt.scatter(cX_utm_loc, cY_utm_loc, label='scanned landmarks',c='b',s=300)
-plt.scatter(utm_x_loc, utm_y_loc, label='initial robot pose',c='b', marker="v",s=300)
-plt.scatter(traj_x[0:len(traj_x)-300:100], traj_y[0:len(traj_y)-300:100],c='black',s=20)
+plt.scatter(cX_utm_loc, cY_utm_loc, label='scanned landmarks',c='b')
+plt.scatter(utm_x_loc, utm_y_loc, label='initial robot pose',c='b', marker="v")
+plt.scatter(traj_x[0:len(traj_x)-300:100], traj_y[0:len(traj_y)-300:100],c='black',s=1)
 
-plt.scatter(U_new[0,:], U_new[1,:], label='transform landmarks',c='r',s=300)
-plt.scatter(utm_loc_new[0], utm_loc_new[1], label='transform pose',c='r', marker="v",s=300)
+plt.scatter(U_new[0,:], U_new[1,:], label='transform landmarks',c='r')
+plt.scatter(utm_loc_new[0], utm_loc_new[1], label='transform pose',c='r', marker="v")
 
 plt.axis('equal')
-plt.title('residuals btw scan and ref', fontsize=30)
-plt.legend(fontsize=30)
+plt.title('residuals btw scan and ref', fontsize=15)
+plt.legend()
 plt.show()
-
-print(cX_utm_loc,cY_utm_loc)

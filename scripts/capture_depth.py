@@ -6,6 +6,7 @@ import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 
 file_path = '/home/ncslaber/109-2/210816_NTU_half/'
+file_path = './test data/'
 dist = 'wall2'
 
 def msg2CV(msg):
@@ -34,8 +35,8 @@ class Synchronize:
         if (self.flagDepth and self.flagColor) == True:
             self.imgColor = msg2CV(self.msgColor)
             self.imgDepth = msg2CV(self.msgDepth)
-            np.save(file_path + "depth_"+dist+"m", self.imgDepth)
-            np.save(file_path + "color_"+dist+"m", self.imgColor)
+            np.save(file_path + "depth_with_shrub2", self.imgDepth)
+            np.save(file_path + "color_with_shrub2", self.imgColor)
             print("saved!")
             
         else: 
