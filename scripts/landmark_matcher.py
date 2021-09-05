@@ -15,7 +15,7 @@ from pyproj import Proj
 import sys
 if sys.platform.startswith('linux'): # or win
     print("in linux")
-    file_path = "/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/0906_demo_data/5/"
+    file_path = "/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/0906_demo_data/20/"
 
 ''' show raw data '''
 npDepth = np.load(file_path+"depth.npy")
@@ -144,15 +144,14 @@ with open(file_path+'cb_pose.csv', 'r') as csvfile:
 imu_yaw = float(imu_yaw[0])
 lat = float(lat[0])
 lng = float(lng[0])
-
 _, _, zone, R = utm.from_latlon(lat, lng)
 proj = Proj(proj='utm', zone=zone, ellps='WGS84', preserve_units=False)
-utm_x_loc, utm_y_loc = proj(lng, lat)
+utm_x_loc_origin, utm_y_loc_origin = proj(lng, lat)
 
 cX_m_loc = (centre_y_list-100)*0.05
 cY_m_loc = (200-centre_x_list)*0.05
-cX_utm_loc = cX_m_loc*np.cos(imu_yaw)-cY_m_loc*np.sin(imu_yaw) + utm_x_loc
-cY_utm_loc = cX_m_loc*np.sin(imu_yaw)+cY_m_loc*np.cos(imu_yaw) + utm_y_loc
+cX_utm_loc = cX_m_loc*np.cos(imu_yaw)-cY_m_loc*np.sin(imu_yaw) + utm_x_loc_origin
+cY_utm_loc = cX_m_loc*np.sin(imu_yaw)+cY_m_loc*np.cos(imu_yaw) + utm_y_loc_origin
 center_utm_loc = np.vstack((cX_utm_loc,cY_utm_loc))
 np.save(file_path+'center_utm_loc', center_utm_loc) #############3
 
@@ -175,6 +174,7 @@ plt.draw()
 ''' find rigid transformation '''
 P = center_utm_ref
 U = center_utm_loc
+utm_loc = np.array([[utm_x_loc_origin],[utm_y_loc_origin]])
 resid_scalar = 50
 
 def find_second(row_index, first_min):
@@ -239,7 +239,6 @@ while resid_scalar > 1:
     print('theta (deg): ',(np.arctan2(-R[1,0], R[0,0]))/np.pi*180)
     print('translation: ',t)
     U_new = R@X+U_bar+t
-    utm_loc = np.array([[utm_x_loc],[utm_y_loc]])
     utm_loc_decentral = utm_loc-U_bar
     utm_loc_new = R@utm_loc_decentral+U_bar+t
 
@@ -249,8 +248,7 @@ while resid_scalar > 1:
     resid_scalar = residuals.sum()
     print("residual = ",resid_scalar)
     U = U_new
-    utm_x_loc = utm_loc_new[0][0]
-    utm_y_loc = utm_loc_new[1][0]
+    utm_loc = np.array([[utm_loc_new[0][0]],[utm_loc_new[1][0]]])
     print("iteration time: ", count)
     if count>4:
         print("iterate over 5 times!!")
@@ -264,7 +262,7 @@ fig5 = plt.figure(figsize=(15,15))
 plt.scatter(cX_utm_ref, cY_utm_ref, c='g', label='ref landmarks', marker='X',s=700)
 # plt.scatter(utm_x_ref, utm_y_ref, label='start_recording',c='black')
 plt.scatter(cX_utm_loc, cY_utm_loc, label='scanned landmarks',c='b',s=300)
-plt.scatter(utm_x_loc, utm_y_loc, label='initial robot pose',c='b', marker="v",s=300)
+plt.scatter(utm_x_loc_origin, utm_y_loc_origin, label='initial robot pose',c='b', marker="v",s=300)
 plt.scatter(traj_x[0:len(traj_x)-300:100], traj_y[0:len(traj_y)-300:100],c='black',s=20)
 
 plt.scatter(U_new[0,:], U_new[1,:], label='transform landmarks',c='r',s=300)
@@ -275,4 +273,4 @@ plt.title('residuals btw scan and ref', fontsize=30)
 plt.legend(fontsize=30)
 plt.show()
 
-print(cX_utm_loc,cY_utm_loc)
+

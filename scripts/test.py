@@ -36,7 +36,7 @@ proj = Proj(proj='utm', zone=zone, ellps='WGS84', preserve_units=False)
 utm_x_ref, utm_y_ref = proj(lng, lat)
 
 ''' read map '''
-raw_pgm = cv2.imread(file_path+"height_0.pgm")
+raw_pgm = cv2.imread(file_path+"map.pgm")
 raw_pgm = cv2.cvtColor(raw_pgm, cv2.COLOR_RGB2GRAY)
 (width, height) = raw_pgm.shape # the order is right
 print("pgm height is: ",height)
