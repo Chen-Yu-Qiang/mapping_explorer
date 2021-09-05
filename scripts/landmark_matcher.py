@@ -15,7 +15,7 @@ from pyproj import Proj
 import sys
 if sys.platform.startswith('linux'): # or win
     print("in linux")
-    file_path = "/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/0906_demo_data/20/"
+    file_path = "/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/0906_demo_data/demo/"
 
 ''' show raw data '''
 npDepth = np.load(file_path+"depth.npy")
@@ -79,7 +79,7 @@ for v in range(row):
         for u in range(column):
             if height_layer[v][u] == True:
                 z_depth = depth_Z(u,v)
-                if (z_depth>50 and z_depth<6000):
+                if (z_depth>50 and z_depth<4000):
                     x_depth = (u-cx_d)/fx_d*depth_Z(u,v)
                     plane_l1[200-int(z_depth/50)][int(x_depth/50)+100] += 1
                     
@@ -255,15 +255,15 @@ while resid_scalar > 1:
         break
 
 ''' plot result '''
-traj = np.load('/home/ncslaber/109-2/210725_NTU_leftAreaLibrary/ntu_test2_2021-07-25-17-42-59/traj_GPS_filtered.npy')
-traj_x = traj[0,:]
-traj_y = traj[1,:]
+# traj = np.load('/home/ncslaber/109-2/210725_NTU_leftAreaLibrary/ntu_test2_2021-07-25-17-42-59/traj_GPS_filtered.npy')
+# traj_x = traj[0,:]
+# traj_y = traj[1,:]
 fig5 = plt.figure(figsize=(15,15))
 plt.scatter(cX_utm_ref, cY_utm_ref, c='g', label='ref landmarks', marker='X',s=700)
 # plt.scatter(utm_x_ref, utm_y_ref, label='start_recording',c='black')
 plt.scatter(cX_utm_loc, cY_utm_loc, label='scanned landmarks',c='b',s=300)
 plt.scatter(utm_x_loc_origin, utm_y_loc_origin, label='initial robot pose',c='b', marker="v",s=300)
-plt.scatter(traj_x[0:len(traj_x)-300:100], traj_y[0:len(traj_y)-300:100],c='black',s=20)
+# plt.scatter(traj_x[0:len(traj_x)-300:100], traj_y[0:len(traj_y)-300:100],c='black',s=20)
 
 plt.scatter(U_new[0,:], U_new[1,:], label='transform landmarks',c='r',s=300)
 plt.scatter(utm_loc_new[0], utm_loc_new[1], label='transform pose',c='r', marker="v",s=300)

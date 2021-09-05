@@ -16,7 +16,7 @@ import sys
 if sys.platform.startswith('linux'): # or win
     print("in linux")
 
-file_path = "/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/0906_demo_data/10/"
+file_path = "/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/0906_demo_data/demo/"
 
 with open(file_path+'lat_lon.csv', 'r') as csvfile:
     lat, lng = csv.reader(csvfile, delimiter=',')
@@ -27,7 +27,7 @@ proj = Proj(proj='utm', zone=zone, ellps='WGS84', preserve_units=False)
 utm_x_ref, utm_y_ref = proj(lng, lat)
 
 ''' load local map '''
-raw_pgm = cv2.imread("/home/ncslaber/1.pgm")
+raw_pgm = cv2.imread(file_path+"demo.pgm")
 # print(raw_pgm.shape[:2])
 raw_pgm_binary = np.zeros(raw_pgm.shape[:2],dtype=np.uint8)
 raw_pgm_binary[raw_pgm[:,:,0]==0]=255
@@ -106,14 +106,14 @@ centre_x_list = np.asarray(centre_x_list)
 centre_y_list = np.asarray(centre_y_list)
 trunk_radius_utm_list = np.asarray(trunk_radius_utm_list)
 
-''' load robot current pose '''
+''' load robot current pose 
 with open(file_path+'cb_pose.csv', 'r') as csvfile:
     imu_yaw, lat, lng = csv.reader(csvfile, delimiter=',')
 imu_yaw = float(imu_yaw[0])
 lat = float(lat[0])
 lng = float(lng[0])
 _, _, zone, R = utm.from_latlon(lat, lng)
-proj = Proj(proj='utm', zone=zone, ellps='WGS84', preserve_units=False)
+proj = Proj(proj='utm', zone=zone, ellps='WGS84', preserve_units=False)'''
 utm_x_loc_origin, utm_y_loc_origin = proj(lng, lat)
 
 cX_utm_loc = []
@@ -156,10 +156,10 @@ plt.draw()
 
 ''' find rigid transformation '''
 P = center_utm_ref
-# U = center_utm_loc
+U = center_utm_loc
 
-U = np.array([[ 352846.31057329,  352849.9848004 ],
-       [2767649.02233138, 2767649.94567053]])
+# U = np.array([[ 352846.31057329,  352849.9848004 ],
+#        [2767649.02233138, 2767649.94567053]])
 utm_loc = np.array([[utm_x_loc_origin],[utm_y_loc_origin]])
 resid_scalar = 50
 
@@ -242,15 +242,15 @@ while resid_scalar > 1:
         break
 
 ''' plot result '''
-traj = np.load('/home/ncslaber/109-2/210725_NTU_leftAreaLibrary/ntu_test2_2021-07-25-17-42-59/traj_GPS_filtered.npy')
-traj_x = traj[0,:]
-traj_y = traj[1,:]
+# traj = np.load('/home/ncslaber/109-2/210725_NTU_leftAreaLibrary/ntu_test2_2021-07-25-17-42-59/traj_GPS_filtered.npy')
+# traj_x = traj[0,:]
+# traj_y = traj[1,:]
 fig5 = plt.figure(figsize=(15,15))
 plt.scatter(cX_utm_ref, cY_utm_ref, c='g', label='ref landmarks', marker='X',s=700)
 # plt.scatter(utm_x_ref, utm_y_ref, label='start_recording',c='black')
 plt.scatter(cX_utm_loc, cY_utm_loc, label='scanned landmarks',c='b',s=300)
 plt.scatter(utm_x_loc_origin, utm_y_loc_origin, label='initial robot pose',c='b', marker="v",s=300)
-plt.scatter(traj_x[0:len(traj_x)-300:100], traj_y[0:len(traj_y)-300:100],c='black',s=20)
+# plt.scatter(traj_x[0:len(traj_x)-300:100], traj_y[0:len(traj_y)-300:100],c='black',s=20)
 
 plt.scatter(U_new[0,:], U_new[1,:], label='transform landmarks',c='r',s=300)
 plt.scatter(utm_loc_new[0], utm_loc_new[1], label='transform pose',c='r', marker="v",s=300)

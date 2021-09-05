@@ -7,7 +7,7 @@ import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 import csv
 
-file_path = '/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/0906_demo_data/20/'
+file_path = '/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/0906_demo_data/demo/'
 
 def msg2CV(msg):
     bridge = CvBridge()

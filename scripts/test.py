@@ -19,7 +19,7 @@ import sys
 if sys.platform.startswith('linux'): # or win
     print("in linux")
 
-directory = '/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/0906_demo_data/'
+directory = '/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/0906_demo_data/demo/'
 bag_name = ''#'ntu_test3_2021-07-25-18-23-39/'
 file_path = directory+bag_name
 shp_path = file_path + 'shapefiles/'
@@ -36,7 +36,7 @@ proj = Proj(proj='utm', zone=zone, ellps='WGS84', preserve_units=False)
 utm_x_ref, utm_y_ref = proj(lng, lat)
 
 ''' read map '''
-raw_pgm = cv2.imread(file_path+"map.pgm")
+raw_pgm = cv2.imread(file_path+"demo.pgm")
 raw_pgm = cv2.cvtColor(raw_pgm, cv2.COLOR_RGB2GRAY)
 (width, height) = raw_pgm.shape # the order is right
 print("pgm height is: ",height)
@@ -62,6 +62,9 @@ while True:
 ''' preprocess the map '''
 raw_pgm_binary = np.zeros(raw_pgm.shape[:2],dtype=np.uint8)
 raw_pgm_binary[raw_pgm==0]=255
+kernel = np.ones((3,3), np.uint8)
+raw_pgm_binary = cv2.dilate(raw_pgm_binary,kernel,iterations = 1)
+raw_pgm_binary = cv2.erode(raw_pgm_binary, kernel, iterations = 1)
 fig = plt.figure(figsize=(10,10))
 subplot = fig.add_subplot(121)
 subplot.imshow(cv2.cvtColor(raw_pgm, cv2.COLOR_BGR2RGB))
