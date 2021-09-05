@@ -1,257 +1,191 @@
-file_path = "/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/0906_demo_data/10/"
+'''math tool'''
+import csv
+import numpy as np
+from scipy.spatial import distance as dist
 
-''' show raw data '''
-npDepth = np.load(file_path+"depth.npy")
-npColor = np.load(file_path+"color.npy")
-npDepthF = cv2.convertScaleAbs(npDepth, alpha=0.02) # 6m
-npDepthF_color = cv2.applyColorMap(npDepthF, cv2.COLORMAP_JET)
-fig=plt.figure(figsize=(10,10))
+'''plot tool'''
+import matplotlib.pyplot as plt
+
+'''image tool'''
+import cv2
+import statistics as sta
+
+import utm
+from pyproj import Proj
+import shapefile
+
+import os
+import sys
+if sys.platform.startswith('linux'): # or win
+    print("in linux")
+
+directory = '/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/0906_demo_data/'
+bag_name = ''#'ntu_test3_2021-07-25-18-23-39/'
+file_path = directory+bag_name
+shp_path = file_path + 'shapefiles/'
+os.makedirs(os.path.dirname(file_path), exist_ok=True)
+os.makedirs(os.path.dirname(shp_path), exist_ok=True)
+
+with open(file_path+'lat_lon.csv', 'r') as csvfile:
+    lat, lng = csv.reader(csvfile, delimiter=',')
+lat = float(lat[0])
+lng = float(lng[0])
+
+_, _, zone, R = utm.from_latlon(lat, lng)
+proj = Proj(proj='utm', zone=zone, ellps='WGS84', preserve_units=False)
+utm_x_ref, utm_y_ref = proj(lng, lat)
+
+''' read map '''
+raw_pgm = cv2.imread(file_path+"height_0.pgm")
+raw_pgm = cv2.cvtColor(raw_pgm, cv2.COLOR_RGB2GRAY)
+(width, height) = raw_pgm.shape # the order is right
+print("pgm height is: ",height)
+cv2.imshow("raw_pgm",cv2.resize(raw_pgm, (700, 700)))
+cv2.waitKey(100)
+cv2.imwrite(file_path+'raw_modified.png', raw_pgm)
+
+def draw_click_circle(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDBLCLK:
+        cv2.circle(raw_pgm, (x, y), 20, 255, -1)
+
+print("manually reduce noise---")
+''' reduce noise '''
+cv2.namedWindow('raw_pgm')
+cv2.setMouseCallback('raw_pgm', draw_click_circle)
+while True:
+    cv2.imshow('raw_pgm', raw_pgm)
+    key = cv2.waitKey(1) & 0xFF
+    if key == ord('q'):
+        print("break click!")
+        break
+
+''' preprocess the map '''
+raw_pgm_binary = np.zeros(raw_pgm.shape[:2],dtype=np.uint8)
+raw_pgm_binary[raw_pgm==0]=255
+fig = plt.figure(figsize=(10,10))
 subplot = fig.add_subplot(121)
-subplot.imshow(npColor)
+subplot.imshow(cv2.cvtColor(raw_pgm, cv2.COLOR_BGR2RGB))
 subplot = fig.add_subplot(122)
-subplot.imshow(npDepthF_color)
-
-''' to world coordinate '''
-cx_d = 320.6562194824219 #424
-cy_d = 241.57083129882812 #241
-fx_d = 384.31365966796875 #424
-fy_d = 384.31365966796875 #424
-npPointX = np.asarray(range(640))-cx_d
-npPointX = np.diag(npPointX)
-npPointX = npDepth.dot(npPointX)/ fx_d * (-1)
-
-npPointY = np.asarray(range(480))-cy_d
-npPointY = np.diag(npPointY)
-theta = 0/180*np.pi
-npPointY = npPointY.dot(npDepth)/ fy_d * (-1) 
-npPointY = npPointY*np.cos(theta) + npDepth * np.sin(theta) + 410
-npPointY = npPointY.astype('float16')
-
-''' depth segmentation: show layers '''
-npHeight = np.copy(npPointY)
-color_seq = {'brown': (0,130,210), 'red':(0,0,255),'yellow':(22,220,220),
-                'green':(0,255,0), 'blue':(255,0,0),'black':(0,0,0), 
-                'gray':(201,201,201), 'orange':(13,101,245), 'sky':(239,178,142) }
-npHeight_seg = np.zeros((npDepth.shape[0],npDepth.shape[1],3))
-
-npHeight_seg[npHeight<300]=color_seq['gray']
-npHeight_seg[np.logical_and(npHeight<500,npHeight>300)]=color_seq['orange']
-npHeight_seg[np.logical_and(npHeight<700,npHeight>500)]=color_seq['green']
-npHeight_seg[np.logical_and(npHeight<900,npHeight>700)]=color_seq['yellow']
-npHeight_seg[np.logical_and(npHeight<1100,npHeight>900)]=color_seq['blue']
-npHeight_seg[np.logical_and(npHeight<1300,npHeight>1100)]=color_seq['red']
-npHeight_seg[npHeight>1300]=color_seq['sky']
-npHeight_seg[npHeight==410]=color_seq['black']
-npHeight_seg = npHeight_seg.astype('uint8')
-fig2,ax = plt.subplots(figsize=(8,8))
-plt.title('slice every 20 cm', fontsize=15)
-plt.imshow(cv2.cvtColor(npHeight_seg, cv2.COLOR_BGR2RGB))
-
-''' top-down view grid '''
-def depth_Z(u,v):
-    return npDepth[v][u]
-height_layer_tmp = np.logical_and(npHeight<500,npHeight>300)
-height_layer = np.logical_and(height_layer_tmp,npHeight!=410)
-
-plane_l1 = np.zeros((int(10/0.05),int(10/0.05)),dtype=np.uint8)
-
-row, column = npDepth.shape
-
-for v in range(row):
-    if height_layer[v].any() == True:
-        for u in range(column):
-            if height_layer[v][u] == True:
-                z_depth = depth_Z(u,v)
-                if (z_depth>50 and z_depth<6000):
-                    x_depth = (u-cx_d)/fx_d*depth_Z(u,v)
-                    plane_l1[200-int(z_depth/50)][int(x_depth/50)+100] += 1
-                    
-hieght_or = np.zeros((int(10/0.05),int(10/0.05)), dtype=np.uint8)
-hieght_or[plane_l1>8]=255
-hieght_or = hieght_or.astype('uint8')
-kernel = np.ones((2,2), np.uint8)
-hieght_or = cv2.dilate(hieght_or,kernel,iterations = 1)
-hieght_or = cv2.erode(hieght_or, kernel, iterations = 1)
-# fig, ax = plt.subplots(figsize=(8,8))
-# plt.title('filter grid > 4', fontsize=15)
-# plt.imshow(cv2.cvtColor(hieght_or, cv2.COLOR_BGR2RGB))
+subplot.imshow(cv2.cvtColor(raw_pgm_binary, cv2.COLOR_BGR2RGB))
 
 ''' find connected component and push into point array A '''
-num_objects, labels = cv2.connectedComponents(hieght_or)
+num_objects, labels = cv2.connectedComponents(raw_pgm_binary)
 centre_x_list = []
 centre_y_list = []
-circle_bd = np.zeros(hieght_or.shape, dtype=np.uint8)
+trunk_radius_utm_list = []
+centroid_rawList = []
+circle_bd = np.zeros(raw_pgm_binary.shape, dtype=np.uint8)
 print('>>>>num_objects:',num_objects)
+
 for i in range(num_objects-1):
     A = []
-    for x in range(200):
-        for y in range(200):
+    for x in range(1024):
+        for y in range(1024):
             if labels[x][y] == i+1:
                 A.append(np.array([-x/(x*x+y*y), -y/(x*x+y*y), -1/(x*x+y*y)]))
     A = np.asarray(A)
     print('# of points: ',A.shape)
+    
     if A.shape[0] < 10:
         continue
 
     k = np.linalg.inv(A.T @ A)
     k = k @ A.T
     k = k @ np.ones((k.shape[1],1))
+    # print(k)
+
     centre_x = k[0][0]/(-2)
     centre_y = k[1][0]/(-2)
     radius_r = np.sqrt(centre_x*centre_x+centre_y*centre_y-k[2][0])
     print('x,y,r: ', int(centre_x+0.5), int(centre_y+0.5), int(radius_r+0.5))
     
-    cv2.circle(circle_bd,(int(centre_y+0.5), int(centre_x+0.5)), int(radius_r+0.5), 150, 2)
-    
+    centroid_rawList.append((int(centre_x+0.5),int(centre_y+0.5)))
     centre_x_list.append(int(centre_x+0.5))
     centre_y_list.append(int(centre_y+0.5))
+    trunk_radius_utm_list.append(int(radius_r+0.5))
 
+    cv2.circle(circle_bd,(int(centre_y), int(centre_x)), int(radius_r+0.5), 150, 2)
     cv2.putText(circle_bd, #numpy array on which text is written
-                str(int(centre_x+0.5))+','+str(int(centre_y+0.5)), #text
+                str(int(centre_x))+','+str(int(centre_y)), #text
                 (int(centre_y)-20,int(centre_x)-20), #position at which writing has to start
                 cv2.FONT_HERSHEY_SIMPLEX, #font family
                 0.2, #font size
                 255, #font color
                 1, cv2.LINE_AA) #font stroke
-circle_bd[hieght_or==255]=255
-centre_x_list = np.asarray(centre_x_list)
-centre_y_list = np.asarray(centre_y_list)
-
-fig3 = plt.figure(figsize=(8,8))
-plt.title('current found trunk')
+circle_bd[raw_pgm_binary==255]=255
+fig1,ax1 = plt.subplots(figsize=(8,8))
 plt.imshow(cv2.cvtColor(circle_bd, cv2.COLOR_BGR2RGB))
 
-''' load robot current pose '''
-with open(file_path+'cb_pose.csv', 'r') as csvfile:
-    imu_yaw, lat, lng = csv.reader(csvfile, delimiter=',')
-imu_yaw = float(imu_yaw[0])
-lat = float(lat[0])
-lng = float(lng[0])
-
-_, _, zone, R = utm.from_latlon(lat, lng)
-proj = Proj(proj='utm', zone=zone, ellps='WGS84', preserve_units=False)
-utm_x_loc, utm_y_loc = proj(lng, lat)
-
-cX_m_loc = (centre_y_list-100)*0.05
-cY_m_loc = (200-centre_x_list)*0.05
-cX_utm_loc = cX_m_loc*np.cos(imu_yaw)-cY_m_loc*np.sin(imu_yaw) + utm_x_loc
-cY_utm_loc = cX_m_loc*np.sin(imu_yaw)+cY_m_loc*np.cos(imu_yaw) + utm_y_loc
-center_utm_loc = np.vstack((cX_utm_loc,cY_utm_loc))
-np.save(file_path+'center_utm_loc', center_utm_loc) #############3
-
-''' load landmark map '''
-directory = '/home/ncslaber/109-2/210725_NTU_leftAreaLibrary/'
-bag_name = 'ntu_test3_2021-07-25-18-23-39/'
-file_path_map = directory+bag_name
-center_utm_ref = np.load(file_path_map+'center_utm_ref.npy')
-
-cX_utm_ref = center_utm_ref[0,:]
-cY_utm_ref = center_utm_ref[1,:]
-# fig4 = plt.figure(figsize=(8,8))
-# plt.scatter(cX_utm_ref, cY_utm_ref, c='g', label='reference landmarks', marker='X',s=100)
-# # plt.scatter(utm_x_ref, utm_y_ref, label='start_recording',c='black')
-# plt.axis('equal')
-# plt.title('global map in UTM', fontsize=15)
-# plt.legend()
-# plt.draw()
-
-''' find rigid transformation '''
-P = center_utm_ref
-U = center_utm_loc
-resid_scalar = 50
-
-def find_second(row_index, first_min):
-    second_min = 100
-    sm_index = 0
-    row_list = D[row_index,:]
-    for i in range(len(row_list)):
-        if row_list[i] != first_min:
-            if row_list[i] < second_min:
-                second_min = row_list[i]
-                sm_index = i
+def transform_from_pixel2m(cX, cY,length):  # Here effects initial position
+    # cX_m, cY_m = transformation(cX, cY, -0.5*np.pi, -int(length*(1-map_start_y)), int(length*(1-map_start_x)))
     
-    return second_min, sm_index
-count = 0
-while resid_scalar > 1:
-    count += 1
-    D = dist.cdist(U.T, P.T)
-    print('>>>> start to ICP >>>>')
-    print('dist: ', D)
-    # rows = D.min(axis=1)
-    cols = D.argmin(axis=1)
-    print('match point: ', list(enumerate(cols)))
+    cX_m = cX - int(length*(1-0.5))
+    cY_m = cY - int(length*(1-0.5))
+    
+    cX_m /= 20
+    cY_m /= 20
+    return cX_m, cY_m
 
-    for a in range(len(cols)):
-        b=1
-        while a+b < len(cols):
-            if cols[a] == cols[a+b]:
-                print("matched same ref landmarks!")
-                second_min_A,A = find_second(a,D[a,cols[a]])
-                second_min_B,B = find_second(a+b,D[a+b,cols[a+b]])
-                if second_min_A>second_min_B:
-                    cols[a+b]=B
-                elif second_min_A<second_min_B:
-                    cols[a]=A
-                print('changed point: ', list(enumerate(cols)))
-            b+=1
-        
-    Q = np.zeros(U.shape)
-    for (row, col) in enumerate(cols):
-        Q[:,row] = P[:,col]
+''' find neg bds of trunk '''
+fig2,ax2 = plt.subplots(figsize=(7,5))
+centre_x_list = np.asarray(centre_x_list)
+centre_y_list = np.asarray(centre_y_list)
+trunk_radius_utm_list = np.asarray(trunk_radius_utm_list)
 
-    U_bar = np.array([np.average(U, axis=1)])
-    U_bar = U_bar.T
-    Q_bar = np.array([np.average(Q, axis=1)])
-    Q_bar = Q_bar.T
+number_of_point = 12
+piece_rad = np.pi/(number_of_point/2)
+print(len(centre_x_list))
+for j in range(centre_x_list.shape[0]):
+    neg_bd = []
+    cX = centre_x_list[j]
+    cY = centre_y_list[j]
+    # print(cX, cY)
+    trunk_radius_utm = trunk_radius_utm_list[j]/10
+    cX_m, cY_m = transform_from_pixel2m(cX, cY, raw_pgm.shape[0])
+    # print(cX_m, cY_m)
 
-    X = U-U_bar
-    Y = Q-Q_bar
-    S = X @ Y.T
-    u, s, vh = np.linalg.svd(S)
-    # check u, vh det
-    print('det(vh@u.T): ',np.linalg.det(vh@u.T))
-    det = np.linalg.det(vh@u.T)
-    if det>0:
-        tmp = np.array([[1,0],[0,1]])
-    else: 
-        tmp = np.array([[1,0],[0,-1]])
-    R = vh @ tmp @ u.T
-    t = Q_bar-U_bar
+    for i in range(number_of_point):
+        neg_bd.append((cX_m+trunk_radius_utm*np.cos(piece_rad*i)+utm_x_ref, cY_m+trunk_radius_utm*np.sin(piece_rad*i)+utm_y_ref))
+    neg_bd = np.asarray(neg_bd)
+    plt.scatter(neg_bd[:,0], neg_bd[:,1], c='b', s=10)
+    plt.scatter(cX_m+utm_x_ref, cY_m+utm_y_ref, c='g')
+    np.save(shp_path+'neg_'+str(j+1)+'_bd_utm', neg_bd)
 
-    print('R: ',R)
-    print('theta (deg): ',(np.arctan2(-R[1,0], R[0,0]))/np.pi*180)
-    print('translation: ',t)
-    U_new = R@X+U_bar+t
-    utm_loc = np.array([[utm_x_loc],[utm_y_loc]])
-    utm_loc_decentral = utm_loc-U_bar
-    utm_loc_new = R@utm_loc_decentral+U_bar+t
+    gps_lat, gps_lon = utm.to_latlon(neg_bd[:,0], neg_bd[:,1], zone, R)
+    gps_latlon = np.vstack(( gps_lat, gps_lon))
+    gps_latlon = np.transpose(gps_latlon)
+    w = shapefile.Writer(shp_path+'neg_'+str(j+1))
+    w.field('LAT_LON', 'C', '40')
+    w.multipoint(gps_latlon) 
+    w.record('neg'+str(j+1))
+    w.close()
 
-    # calculate residuals
-    residuals = Q-U_new
-    residuals = np.absolute(residuals)
-    resid_scalar = residuals.sum()
-    print("residual = ",resid_scalar)
-    U = U_new
-    print("iteration time: ", count)
-    if count>4:
-        print("iterate over 5 times!!")
-        break
-
-''' plot result '''
-traj = np.load('/home/ncslaber/109-2/210725_NTU_leftAreaLibrary/ntu_test2_2021-07-25-17-42-59/traj_GPS_filtered.npy')
-traj_x = traj[0,:]
-traj_y = traj[1,:]
-fig5 = plt.figure(figsize=(7,5))
-plt.scatter(cX_utm_ref, cY_utm_ref, c='g', label='ref landmarks', marker='X',s=100)
-# plt.scatter(utm_x_ref, utm_y_ref, label='start_recording',c='black')
-plt.scatter(cX_utm_loc, cY_utm_loc, label='scanned landmarks',c='b')
-plt.scatter(utm_x_loc, utm_y_loc, label='initial robot pose',c='b', marker="v")
-plt.scatter(traj_x[0:len(traj_x)-300:100], traj_y[0:len(traj_y)-300:100],c='black',s=1)
-
-plt.scatter(U_new[0,:], U_new[1,:], label='transform landmarks',c='r')
-plt.scatter(utm_loc_new[0], utm_loc_new[1], label='transform pose',c='r', marker="v")
-
+plt.ylabel('UTM Y [m]', fontsize=22)
+plt.xticks(fontsize=18 )
+plt.xlabel('UTM X [m]', fontsize=22)
+plt.yticks(fontsize=18 )
+plt.grid('on')
 plt.axis('equal')
-plt.title('residuals btw scan and ref', fontsize=15)
-plt.legend()
+plt.title('neg bds of trunks', fontsize=15)
+plt.draw()
+
+fig3, ax3 = plt.subplots(figsize=(8, 8))
+plt.grid(True)
+plt.axis('equal')
+for i in range(len(centre_x_list)):
+    neg_bd = np.load(shp_path+'neg_'+str(i+1)+'_bd_utm.npy')
+    plt.scatter(neg_bd[:,0], neg_bd[:,1], c='b')
+
+r = shapefile.Reader('/home/ncslaber/shapefiles/test/pos/pos_NTU_left')
+pos_bd = r.shape(0).points
+pos_bd = np.asarray(pos_bd)
+ux, uy = proj(pos_bd[:,1], pos_bd[:,0])
+plt.plot(ux,uy,'-o',c='black',label='preset positive bd')
+ax3.get_xaxis().get_major_formatter().set_useOffset(
+        round(min(ux) / 1000, 2)*1000)
+plt.ylabel('UTM Y [m]', fontsize=22)
+plt.xticks(fontsize=18 )
+plt.xlabel('UTM X [m]', fontsize=22)
+plt.yticks(fontsize=18 )
+plt.axis('equal')
 plt.show()
