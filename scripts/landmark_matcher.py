@@ -79,7 +79,7 @@ for v in range(row):
         for u in range(column):
             if height_layer[v][u] == True:
                 z_depth = depth_Z(u,v)
-                if (z_depth>50 and z_depth<4000):
+                if (z_depth>50 and z_depth<6000):
                     x_depth = (u-cx_d)/fx_d*depth_Z(u,v)
                     plane_l1[200-int(z_depth/50)][int(x_depth/50)+100] += 1
                     
