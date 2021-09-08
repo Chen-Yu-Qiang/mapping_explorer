@@ -1,3 +1,8 @@
+```sh
+pip install -r requirements.txt
+```
+
+
 ```
 rosrun capture_depth.py
 python calib_extrinsic.py
