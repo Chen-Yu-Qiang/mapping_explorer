@@ -3,11 +3,23 @@
 This is a ROS package. Compile it with catkin.
 
 ```sh
+$ pip install -r requirements.txt
+```
+
+```sh
 rosrun capture_depth.py
 python calib_extrinsic.py
 
 rosrun check_depth.py
 ```
+
+## Template for commit mdg
+What/How
+[New]
+[Fix]
+[Enhancement]
+
+
 ## REFERENCE
 [find closest dist](https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/) are a powerful concept. They allow you to, find the *closest point in the dataset*.
 
