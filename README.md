@@ -1,7 +1,5 @@
 # mapping_explorer
 ## INSTALLATION
-This is a ROS package. Compile it with catkin.
-
 ```sh
 $ pip install -r requirements.txt
 ```
@@ -13,6 +11,14 @@ python calib_extrinsic.py
 rosrun check_depth.py
 ```
 
+This is a ROS package. Compile it with catkin.
+```sh
+mkdir build
+cd build
+cmake ..
+make
+
+```
 ## Template for commit mdg
 What/How
 [New]
