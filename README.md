@@ -20,10 +20,10 @@ make
 
 ```
 ## Template for commit mdg
-What/How
+What/How  
 [New]
 [Fix]
-[Enhancement]
+[Modi]
 
 
 ## REFERENCE

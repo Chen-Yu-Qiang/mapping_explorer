@@ -21,7 +21,7 @@ if sys.platform.startswith('linux'): # or win
     print("in linux")
 
 directory = '/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/NTU_allMaps/'
-bag_name = 'ChiaY_outerHalf_2021-08-17-17-17-10/' #'ntu_test3_2021-07-25-18-23-39/'
+bag_name = '210906_loopClosure/' #'ntu_test3_2021-07-25-18-23-39/'
 file_path = directory+bag_name
 shp_path = file_path + 'shapefiles/'
 os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -47,12 +47,12 @@ def morph_map(raw_pgm, raw_pgm_binary):
     subplot.imshow(cv2.cvtColor(raw_pgm, cv2.COLOR_BGR2RGB))
     subplot = fig.add_subplot(122)
     subplot.imshow(cv2.cvtColor(raw_pgm_binary, cv2.COLOR_BGR2RGB))
-    cv2.imwrite(file_path+'raw_pgm_binary.png', raw_pgm_binary)
+    # cv2.imwrite(file_path+'raw_pgm_binary.png', raw_pgm_binary)
 
 def filter_labels(num_objects, labels):
     filter_labels_list = []
     for i in range(num_objects):
-        if len(labels[labels==i])>20 and len(labels[labels==i])<400:
+        if len(labels[labels==i])>40 and len(labels[labels==i])<800:
             filter_labels_list.append(i)
     return filter_labels_list
 
@@ -66,7 +66,7 @@ def get_matched_circle(raw_pgm_binary, filter_labels_list):
                 if labels[x][y] == i:
                     A.append(np.array([-x/(x*x+y*y), -y/(x*x+y*y), -1/(x*x+y*y)]))
         A = np.asarray(A)
-        print('# of points: ', A.shape)
+        print('new one circle # of points: ', A.shape)
         
         k = np.linalg.inv(A.T @ A)
         k = k @ A.T
@@ -118,6 +118,7 @@ def get_merging_circle(raw_pgm_binary, filter_labels_list):
                     indexX += centroid_tmp[0]
                     indexY += centroid_tmp[1]
                     indexR += centroid_tmp[2]
+                    print('     x,y,r: ', centroid_tmp)
                     count += 1
                     centroid = (indexX/count, indexY/count, indexR/count)
                     i -= 1
@@ -140,13 +141,13 @@ def get_merging_circle(raw_pgm_binary, filter_labels_list):
 
     np.save(file_path+'centroid_filteredList', centroid_filteredList)
 
-    return centroid_filteredList
+    return centroid_filteredList 
 
 def transform_from_pixel2m(cX, cY,length):  # Here effects initial position
     # cX_m, cY_m = transformation(cX, cY, -0.5*np.pi, -int(length*(1-map_start_y)), int(length*(1-map_start_x)))
     
-    cX_m = cX - int(length*0.2) # initial position in the map
-    cY_m = cY - int(length*0.8)
+    cX_m = cX - int(length*0.2) # initial position in the map #0.3
+    cY_m = cY - int(length*0.8) # 0.5
     
     cX_m *= resolution_pixel
     cY_m *= resolution_pixel
@@ -162,6 +163,7 @@ def get_utm_negBDs_from_center(index, cX_m, cY_m, cR_m, utm_x_ref, utm_y_ref):
     plt.scatter(neg_bd[:,0], neg_bd[:,1], c='b', s=10)
     plt.scatter(cX_m+utm_x_ref, cY_m+utm_y_ref, c='g')
     np.save(shp_path+'neg_'+str(index+1)+'_bd_utm', neg_bd)
+    np.save(shp_path+'center_'+str(index+1)+'_bd_utm', (cX_m+utm_x_ref, cY_m+utm_y_ref, cR_m))
 
     return neg_bd
 
@@ -174,6 +176,7 @@ def save_shp(index, neg_bd):
     w.multipoint(gps_latlon) 
     w.record('neg'+str(index+1))
     w.close()
+    print("save one shp")
 
 def draw_click_circle(event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDBLCLK:
@@ -194,15 +197,18 @@ def reduce_noise(raw_pgm):
 if __name__=="__main__":
     ''' read map '''
     # raw_pgm = cv2.imread(file_path+"half_left.pgm")
-    raw_pgm = cv2.imread(file_path+"raw.png")
+    raw_pgm = cv2.imread(file_path+"raw_modified.png")
+    if raw_pgm is None:
+        print("Image is empty!!")
     raw_pgm = cv2.cvtColor(raw_pgm, cv2.COLOR_RGB2GRAY)
     (width, height) = raw_pgm.shape # the order is right
     print("pgm height is: ",height)
+    # raw_pgm = cv2.resize(raw_pgm, (1024, 1024), interpolation=cv2.INTER_AREA)
     cv2.imshow("raw_pgm",cv2.resize(raw_pgm, (700, 700)))
     cv2.waitKey(100)
     
     ''' reduce noise '''
-    reduce_noise(raw_pgm)
+    # reduce_noise(raw_pgm)
 
     ''' preprocess the map '''
     raw_pgm_binary = np.zeros(raw_pgm.shape[:2],dtype=np.uint8)
@@ -220,7 +226,7 @@ if __name__=="__main__":
     
     '''merge close trunk by repeatedly move average'''
     centroid_filteredList = get_merging_circle(raw_pgm_binary, filter_labels_list)
-    print('>>>># of dist-filtered  objects:',len(filter_labels_list))
+    print('>>>># of dist-filtered  objects:',len(centroid_filteredList))
     centroid_filteredList = np.asarray(centroid_filteredList)
     centre_x_list = centroid_filteredList[:,0]
     centre_y_list = centroid_filteredList[:,1]
@@ -252,6 +258,7 @@ if __name__=="__main__":
     plt.title('neg bds of trunks', fontsize=15)
     plt.draw()
 
+    '''draw with pos'''
     fig3, ax3 = plt.subplots(figsize=(8, 8))
     plt.grid(True)
     plt.axis('equal')
