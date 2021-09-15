@@ -1,1 +1,4 @@
 .vscode/
+*.dbf
+*.shp
+*.shx
