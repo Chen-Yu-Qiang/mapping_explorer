@@ -1,4 +1,4 @@
-#!usr/bin/env python
+#!usr/bin/env python3
 '''ros utils'''
 import rospy
 from sensor_msgs.msg import Image, CameraInfo, NavSatFix
