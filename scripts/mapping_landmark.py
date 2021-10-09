@@ -20,9 +20,11 @@ import sys
 if sys.platform.startswith('linux'): # or win
     print("in linux")
 
-directory = '/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/NTU_allMaps/'
-bag_name = '210906_loopClosure/' #'ntu_test3_2021-07-25-18-23-39/'
-file_path = directory+bag_name
+# directory = '/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/NTU_allMaps/'
+# bag_name = '210906_loopClosure/' #'ntu_test3_2021-07-25-18-23-39/'
+directory = '/home/ncslaber/110-1/211002_allLibrary/'
+bag_name = '2021-10-03-17-48-23_back-left-2/'
+file_path = '/home/ncslaber/110-1/211002_allLibrary/1007-roughly-builtmap/' #directory+bag_name
 shp_path = file_path + 'shapefiles/'
 os.makedirs(os.path.dirname(file_path), exist_ok=True)
 os.makedirs(os.path.dirname(shp_path), exist_ok=True)
@@ -47,12 +49,13 @@ def morph_map(raw_pgm, raw_pgm_binary):
     subplot.imshow(cv2.cvtColor(raw_pgm, cv2.COLOR_BGR2RGB))
     subplot = fig.add_subplot(122)
     subplot.imshow(cv2.cvtColor(raw_pgm_binary, cv2.COLOR_BGR2RGB))
+    plt.show()
     # cv2.imwrite(file_path+'raw_pgm_binary.png', raw_pgm_binary)
 
 def filter_labels(num_objects, labels):
     filter_labels_list = []
     for i in range(num_objects):
-        if len(labels[labels==i])>40 and len(labels[labels==i])<800:
+        if len(labels[labels==i])>20 and len(labels[labels==i])<800:
             filter_labels_list.append(i)
     return filter_labels_list
 
@@ -80,13 +83,13 @@ def get_matched_circle(raw_pgm_binary, filter_labels_list):
         centroid_rawList.append((int(centre_x+0.5),int(centre_y+0.5),int(radius_r+0.5)))
 
         cv2.circle(circle_bd,(int(centre_y), int(centre_x)), int(radius_r+0.5), 150, 2)
-        cv2.putText(circle_bd, #numpy array on which text is written
-                    str(int(centre_x))+','+str(int(centre_y))+','+str(int(radius_r)), #text
-                    (int(centre_y)-20,int(centre_x)-20), #position at which writing has to start
-                    cv2.FONT_HERSHEY_SIMPLEX, #font family
-                    0.2, #font size
-                    255, #font color
-                    1, cv2.LINE_AA) #font stroke
+        # cv2.putText(circle_bd, #numpy array on which text is written
+        #             str(int(centre_x))+','+str(int(centre_y))+','+str(int(radius_r)), #text
+        #             (int(centre_y)-20,int(centre_x)-20), #position at which writing has to start
+        #             cv2.FONT_HERSHEY_SIMPLEX, #font family
+        #             0.6, #font size
+        #             255, #font color
+        #             1, cv2.LINE_AA) #font stroke
         cv2.imshow('circle_bd',circle_bd)
         cv2.waitKey(100)
     circle_bd[raw_pgm_binary==255]=255
@@ -127,15 +130,15 @@ def get_merging_circle(raw_pgm_binary, filter_labels_list):
                 break
         centroid_filteredList.append(centroid)
         cv2.circle(circle_bd, (int(centroid[1]),int(centroid[0])), int(centroid[2]), 150, 2) # radius is 8 pixel
-        cv2.putText(circle_bd, #numpy array on which text is written
-                    str(int(centroid[0]))+','+str(int(centroid[1]))+','+str(int(centroid[2])), #text
-                    (int(centroid[1])-20,int(centroid[0])-20), #position at which writing has to start
-                    cv2.FONT_HERSHEY_SIMPLEX, #font family
-                    0.2, #font size
-                    255, #font color
-                    1, cv2.LINE_AA) #font stroke
+        # cv2.putText(circle_bd, #numpy array on which text is written
+        #             str(int(centroid[0]))+','+str(int(centroid[1]))+','+str(int(centroid[2])), #text
+        #             (int(centroid[1])-20,int(centroid[0])-20), #position at which writing has to start
+        #             cv2.FONT_HERSHEY_SIMPLEX, #font family
+        #             0.6, #font size
+        #             255, #font color
+        #             1, cv2.LINE_AA) #font stroke
     circle_bd[raw_pgm_binary==255]=255
-    fig2,ax2 = plt.subplots(figsize=(8,8))
+    fig2,ax2 = plt.subplots(figsize=(15,15))
     plt.imshow(cv2.cvtColor(circle_bd, cv2.COLOR_BGR2RGB))
     cv2.imwrite(file_path+'filtered_circle_bd.png', circle_bd)
 
@@ -146,8 +149,8 @@ def get_merging_circle(raw_pgm_binary, filter_labels_list):
 def transform_from_pixel2m(cX, cY,length):  # Here effects initial position
     # cX_m, cY_m = transformation(cX, cY, -0.5*np.pi, -int(length*(1-map_start_y)), int(length*(1-map_start_x)))
     
-    cX_m = cX - int(length*0.2) # initial position in the map #0.3
-    cY_m = cY - int(length*0.8) # 0.5
+    cX_m = cX - int(length*0.5) # initial position in the map #0.3
+    cY_m = cY - int(length*0.5) # 0.5
     
     cX_m *= resolution_pixel
     cY_m *= resolution_pixel
@@ -196,8 +199,8 @@ def reduce_noise(raw_pgm):
 
 if __name__=="__main__":
     ''' read map '''
-    # raw_pgm = cv2.imread(file_path+"half_left.pgm")
-    raw_pgm = cv2.imread(file_path+"raw_modified.png")
+    # raw_pgm = cv2.imread(file_path+"middle-right.pgm")
+    raw_pgm = cv2.imread(file_path+"1007-map.png")
     if raw_pgm is None:
         print("Image is empty!!")
     raw_pgm = cv2.cvtColor(raw_pgm, cv2.COLOR_RGB2GRAY)
@@ -207,7 +210,7 @@ if __name__=="__main__":
     cv2.imshow("raw_pgm",cv2.resize(raw_pgm, (700, 700)))
     cv2.waitKey(100)
     
-    ''' reduce noise '''
+    ''' reduce noise '''   
     # reduce_noise(raw_pgm)
 
     ''' preprocess the map '''
