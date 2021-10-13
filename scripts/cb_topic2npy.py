@@ -3,11 +3,16 @@
 import rospy
 from sensor_msgs.msg import Image, CameraInfo, NavSatFix
 from geometry_msgs.msg import Vector3Stamped
+from nav_msgs.msg import Odometry
 import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 import csv
+import sys
+import os
 
-file_path = '/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/0906_demo_data/demo/'
+file_path = './syn_rosbag/'
+os.makedirs(os.path.dirname(file_path+ "depth/"), exist_ok=True)
+os.makedirs(os.path.dirname(file_path+ "color/"), exist_ok=True)
 
 def msg2CV(msg):
     bridge = CvBridge()
@@ -22,81 +27,96 @@ class Synchronize:
     def __init__(self):
         self.msgColor = None
         self.msgDepth = None
+        self.msgIMU = None
+        self.msgGPS = None
+        self.msgOdom = None
+
         self.flagColor = False
         self.flagDepth = False
         self.flagSaved = False
+        self.flagIMU = False
+        self.flagGPS = False
+        self.flagOdom = False
+
+        self.file_index = 0
+        self.timestamp = 0
+
+        self.listDepth = []
+        self.listColor = []
+        self.listPose = []
+        
     def colorIn(self, color):
         self.msgColor = color
         self.flagColor = True
     def depthIn(self, depth):
         self.msgDepth = depth
+        self.timestampSecs = depth.header.stamp.secs 
+        self.timestampNSecs = depth.header.stamp.nsecs
         self.flagDepth = True
-        
-    def save(self):
-        if (self.flagDepth and self.flagColor) == True:
-            self.imgColor = msg2CV(self.msgColor)
-            self.imgDepth = msg2CV(self.msgDepth)
-            np.save(file_path + "depth", self.imgDepth) # 1tree, 2tree, 2trees
-            np.save(file_path + "color", self.imgColor)
-            print("saved!")
-            self.flagSaved = True
-            
-        else: 
-            print("haven't receive one of them!")
-
-synchronizer = Synchronize()
-def cbDepth(msg):
-    if synchronizer.flagSaved == False:
-        print("receive depth!")
-        synchronizer.depthIn(msg)
-        synchronizer.save()
-def cbColor(msg):
-    if synchronizer.flagSaved == False:
-        synchronizer.colorIn(msg)
-
-class Synchronize_pose:
-    def __init__(self):
-        self.msgIMU = None
-        self.msgGPS = None
-        self.flagIMU = False
-        self.flagGPS = False
-        self.flagSaved = False
     def imuIn(self, yaw_degree):
         self.msgIMU = yaw_degree
         self.flagIMU = True
     def gpsIn(self, lat_lon):
         self.msgGPS = lat_lon
         self.flagGPS = True
+    def odomIn(self, xyz):
+        self.msgOdom = xyz
+        self.flagOdom = True
         
     def save(self):
-        if (self.flagIMU and self.flagGPS) == True:
-            yaw_rad = self.msgIMU/180*np.pi
-            with open(file_path + 'cb_pose.csv', 'w') as csvfile: # or w
-                writer = csv.writer(csvfile)
-                writer.writerows([[yaw_rad],[self.msgGPS.latitude],[self.msgGPS.longitude]])
-            print("saved POSE!")
-            self.flagSaved = True
-            
+        if (self.flagDepth and self.flagColor and self.flagIMU and self.flagOdom) == True:
+            if self.file_index%10 == 0:
+                self.imgColor = msg2CV(self.msgColor)
+                self.imgDepth = msg2CV(self.msgDepth)
+                
+                np.save(file_path + "depth/" + str(int(self.file_index/10)), self.imgDepth) 
+                np.save(file_path + "color/" + str(int(self.file_index/10)), self.imgColor)
+                
+                yaw_rad = self.msgIMU/180*np.pi
+                with open(file_path + 'cb_pose.csv', 'a') as csvfile: # or w
+                    writer = csv.writer(csvfile)
+                    writer.writerow([self.msgOdom.x, self.msgOdom.y, yaw_rad]) 
+                with open(file_path + 'index_timestamp.csv', 'a') as fp: # or w
+                    writer = csv.writer(fp)
+                    writer.writerow([int(self.file_index/10), str(self.timestampSecs)+'.'+str(self.timestampNSecs)] )
+
+                print("saved!")
+                self.flagSaved = True
+            self.file_index += 1
+
+                        
         else: 
-            print("pose haven't receive one of them!")
+            print("haven't receive one of them!")
 
-synchronizer_pose = Synchronize_pose()
+synchronizer = Synchronize()
+def cbDepth(msg):
+    print("receive depth!")
+    synchronizer.depthIn(msg)
+    synchronizer.save()
+
+def cbColor(msg):
+    print("receive color!")
+    synchronizer.colorIn(msg)
+
 def cbIMU(msg):
-    if synchronizer_pose.flagSaved == False:
-        synchronizer_pose.imuIn(msg.vector.z) 
-
+    synchronizer.imuIn(msg.vector.z) 
+    
+def cbOdom(msg):
+    synchronizer.odomIn(msg.pose.pose.position) 
+    
 def cbGPS(msg):
-    if synchronizer_pose.flagSaved == False:
-        synchronizer_pose.gpsIn(msg) 
-        synchronizer_pose.save()
+   synchronizer.gpsIn(msg) 
 
 if __name__ == "__main__":
+    print("Python version: ",sys.version)
     rospy.init_node("depthHandler", anonymous=True)
     subDepth = rospy.Subscriber("/camera/depth/image_rect_raw", Image, cbDepth)
     subColor = rospy.Subscriber("/camera/color/image_raw", Image, cbColor)
     subIMU = rospy.Subscriber("/imu_filter/rpy/filtered", Vector3Stamped, cbIMU)
-    subGPS = rospy.Subscriber("/outdoor_waypoint_nav/gps/filtered", NavSatFix, cbGPS)
+    # subGPS = rospy.Subscriber("/outdoor_waypoint_nav/gps/filtered", NavSatFix, cbGPS)
+    subOdom = rospy.Subscriber("/outdoor_waypoint_nav/odometry/filtered_map", Odometry, cbOdom)
+
     print("successfully initialized!")
-    # print("Python version: ",sys.version)
+    
 
     rospy.spin()

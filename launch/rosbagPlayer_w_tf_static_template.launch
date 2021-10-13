@@ -1,0 +1,11 @@
+<launch>
+  <!--plz replace rosbag file path below-->
+  <arg name="bag_filename"  default="$(find altek_ros)/rgbd/xxx.bag"/>
+
+  <param name="/use_sim_time" value="true"/>
+
+  <node name="playbag" pkg="rosbag" type="play" args="--clock $(arg bag_filename)" output="screen"/>
+
+  <node pkg="tf" type="static_transform_publisher" name="camera_depth_pub" args="0.26 0 0.3 0 0 0 base_link camera_depth_frame 100" />
+
+</launch>

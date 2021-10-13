@@ -25,11 +25,46 @@ What/How
 [Fix]
 [Modi]
 
+## file_list
+```
+.
+├── demo.md  
+├── demo.sh
+├── jupyterNotebook
+│   ├── Automatic_tree_detection.ipynb
+│   ├── demo_test_loc_series(deletable).ipynb
+│   ├── image_util.ipynb
+│   ├── spatio_transform_util.ipynb
+│   ├── Untitled1.ipynb
+│   └── Untitled.ipynb
+├── launch
+│   ├── rosbagPlayer_w_tf_static_template.launch  # play rosbag with complementary tf tree
+│   └── tf_reframe.launch
+├── library
+│   ├── loadData_utils.py
+│   ├── map_utils.py
+│   ├── plot_utils.py
+│   └── rosbag_utils.py
+├── release-notes.md
+├── requirements.txt
+├── scripts
+│   ├── calib_extrinsic.py
+│   ├── capture_depth.py
+│   ├── cb_pose.py
+│   ├── cb_topic2npy.py
+│   ├── check_depth.py
+│   ├── find_trunk_center_inaframe.py
+│   ├── landmark_matcher.py
+│   ├── mapping_landmark.py
+│   ├── plot_landmark.py
+│   └── tf_remove_frames.py
+└── src
+    ├── depth_2_1dpcl_node.cpp
+    └── test.cpp
+```
 
 ## REFERENCE
 [find closest dist](https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/) are a powerful concept. They allow you to, find the *closest point in the dataset*.
-
-rosbag record /amcl_pose /tf /outdoor_waypoint_nav/odometry/filtered_map
 
 
 ### github util

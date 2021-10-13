@@ -1,8 +1,0 @@
-<launch>
-  <arg name="bag_filename"  default="/home/ncslaber/109-2/210725_NTU_leftAreaLibrary/ntu_test2_cut2_204-241.bag"/>
-
-  <node name="playbag" pkg="rosbag" type="play" args="--clock $(arg bag_filename)" output="screen"/> <!---r 0.5-->
-
-  <node pkg="tf" type="static_transform_publisher" name="camera_depth_pub" args="0.26 0 0.3 0 0 0 base_link camera_depth_frame 100" />
-
-</launch>

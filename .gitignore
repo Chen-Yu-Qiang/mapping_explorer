@@ -3,3 +3,7 @@
 *.shp
 *.shx
 *utm.npy
+
+
+
+rosbagPlayer_w_tf_static.launch
