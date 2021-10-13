@@ -57,7 +57,8 @@ What/How
 │   ├── landmark_matcher.py
 │   ├── mapping_landmark.py
 │   ├── plot_landmark.py
-│   └── tf_remove_frames.py
+│   ├── tf_remove_frames.py
+│   └── rosmsg_depth_template.py  #publish depth.npy to rosmsg
 └── src
     ├── depth_2_1dpcl_node.cpp
     └── test.cpp
@@ -67,16 +68,6 @@ What/How
 [find closest dist](https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/) are a powerful concept. They allow you to, find the *closest point in the dataset*.
 
 
-### github util
-```
-echo "# mapping_explorer" >> README.md
-git init
-git add README.md
-git commit -m "first commit"
-git branch -M master
-git remote add origin git@github.com:wowyunDBL/mapping_explorer.git
-git push -u origin master
-``` 
 
 ### shape file in gps(lat, lon)
 ![image](https://github.com/wowyunDBL/mapping_explorer/blob/master/image/RGBD-point_cloud.png)
