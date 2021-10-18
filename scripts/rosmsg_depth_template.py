@@ -24,7 +24,7 @@ pubDepthCameraInfo = rospy.Publisher("/camera/depth/camera_info", CameraInfo, qu
 
 subDepth_altek = rospy.Subscriber("/camera/depth/image_rect_raw", Image, cbDepth)
 
-fDepth = np.load('/home/ncslaber/110-1/211009_allLibrary/front-right/syn_rosbag/depth/2.npy')
+fDepth = np.load('/home/ncslaber/110-1/211009_allLibrary/front-right/syn_rosbag/depth/10.npy')
 msgDepth = CV2msg(fDepth)
 
 msgDepthCameraInfo = CameraInfo()
@@ -39,7 +39,7 @@ msgDepthCameraInfo.P = [384.31365966796875, 0.0, 320.6562194824219, 0.0, 0.0, 38
 msgDepthCameraInfo.binning_x = 0
 msgDepthCameraInfo.binning_y = 0
 
-rate = rospy.Rate(1)
+rate = rospy.Rate(0.2)
 while not rospy.is_shutdown():
     now = rospy.get_rostime()
     
