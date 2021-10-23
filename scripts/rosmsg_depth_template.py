@@ -24,7 +24,7 @@ pubDepthCameraInfo = rospy.Publisher("/camera/depth/camera_info", CameraInfo, qu
 
 subDepth_altek = rospy.Subscriber("/camera/depth/image_rect_raw", Image, cbDepth)
 
-fDepth = np.load('/home/ncslaber/110-1/211009_allLibrary/front-right/syn_rosbag/depth/10.npy')
+fDepth = np.load('/home/ncslaber/110-1/211009_allLibrary/front-right/syn_rosbag/depth/30.npy')
 msgDepth = CV2msg(fDepth)
 
 msgDepthCameraInfo = CameraInfo()

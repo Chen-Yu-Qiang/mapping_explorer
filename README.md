@@ -32,11 +32,15 @@ What/How
 ├── demo.sh
 ├── jupyterNotebook
 │   ├── Automatic_tree_detection.ipynb
-│   ├── demo_test_loc_series(deletable).ipynb
+│   ├── icp_svd.ipynb # center of trunk match iteration (quite same as Automatic_xxx)
 │   ├── image_util.ipynb
-│   ├── spatio_transform_util.ipynb
-│   ├── Untitled1.ipynb
-│   └── Untitled.ipynb
+│   ├── spatio_transform_util.ipynb # point cloud distance test
+│   ├── ground_subtr_npy.ipynb # using height/depth mask and calcu moment of obj and dist
+│   ├── low_pass.ipynb  # moving average to extract ground
+│   ├── transformation_height.ipynb  # equal height line and pitch offset for height
+│   ├── transformation_pose.ipynb # icp for trunk skin
+│   └── histogram_of_trunk.ipynb  # find grass and trunk histogram
+│
 ├── launch
 │   ├── rosbagPlayer_w_tf_static_template.launch  # play rosbag with complementary tf tree
 │   └── tf_reframe.launch

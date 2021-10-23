@@ -13,6 +13,7 @@ import statistics as sta
 import utm
 from pyproj import Proj
 import sys
+import time
 if sys.platform.startswith('linux'): # or win
     print("in linux")
     file_path = "/home/ncslaber/110-1/211002_allLibrary/1008-different_side_trunk/return/"
@@ -35,7 +36,9 @@ for AA in range(20):
     npPointY = np.asarray(range(480))-cy_d
     npPointY = np.diag(npPointY)
     theta = 0/180*np.pi
+    start = time.time()
     npPointY = npPointY.dot(npDepth)/ fy_d * (-1) 
+    print(time.time()-start)
     npPointY = npPointY*np.cos(theta) + npDepth * np.sin(theta) + 410
     npPointY = npPointY.astype('float16')
     ''' depth segmentation: show layers '''

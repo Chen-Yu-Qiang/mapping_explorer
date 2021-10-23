@@ -64,29 +64,31 @@ class Synchronize:
         self.flagOdom = True
         
     def save(self):
-        if (self.flagDepth and self.flagColor and self.flagIMU and self.flagOdom) == True:
-            if self.file_index%10 == 0:
+        # if (self.flagDepth and self.flagColor and self.flagIMU and self.flagOdom) == True:
+            # if self.file_index%10 == 0:
                 self.imgColor = msg2CV(self.msgColor)
                 self.imgDepth = msg2CV(self.msgDepth)
                 
-                np.save(file_path + "depth/" + str(int(self.file_index/10)), self.imgDepth) 
-                np.save(file_path + "color/" + str(int(self.file_index/10)), self.imgColor)
+                # np.save(file_path + "depth/" + str(int(self.file_index/10)), self.imgDepth) 
+                # np.save(file_path + "color/" + str(int(self.file_index/10)), self.imgColor)
+                np.save(file_path + "depth/circling" , self.imgDepth) 
+                np.save(file_path + "color/circling" , self.imgColor)
                 
-                yaw_rad = self.msgIMU/180*np.pi
-                with open(file_path + 'cb_pose.csv', 'a') as csvfile: # or w
-                    writer = csv.writer(csvfile)
-                    writer.writerow([self.msgOdom.x, self.msgOdom.y, yaw_rad]) 
-                with open(file_path + 'index_timestamp.csv', 'a') as fp: # or w
-                    writer = csv.writer(fp)
-                    writer.writerow([int(self.file_index/10), str(self.timestampSecs)+'.'+str(self.timestampNSecs)] )
+                # yaw_rad = self.msgIMU/180*np.pi
+                # with open(file_path + 'cb_pose.csv', 'a') as csvfile: # or w
+                #     writer = csv.writer(csvfile)
+                #     writer.writerow([self.msgOdom.x, self.msgOdom.y, yaw_rad]) 
+                # with open(file_path + 'index_timestamp.csv', 'a') as fp: # or w
+                #     writer = csv.writer(fp)
+                #     writer.writerow([int(self.file_index/10), str(self.timestampSecs)+'.'+str(self.timestampNSecs)] )
 
                 print("saved!")
-                self.flagSaved = True
-            self.file_index += 1
+            #     self.flagSaved = True
+            # self.file_index += 1
 
                         
-        else: 
-            print("haven't receive one of them!")
+        # else: 
+        #     print("haven't receive one of them!")
 
 synchronizer = Synchronize()
 def cbDepth(msg):
@@ -112,9 +114,9 @@ if __name__ == "__main__":
     rospy.init_node("depthHandler", anonymous=True)
     subDepth = rospy.Subscriber("/camera/depth/image_rect_raw", Image, cbDepth)
     subColor = rospy.Subscriber("/camera/color/image_raw", Image, cbColor)
-    subIMU = rospy.Subscriber("/imu_filter/rpy/filtered", Vector3Stamped, cbIMU)
-    # subGPS = rospy.Subscriber("/outdoor_waypoint_nav/gps/filtered", NavSatFix, cbGPS)
-    subOdom = rospy.Subscriber("/outdoor_waypoint_nav/odometry/filtered_map", Odometry, cbOdom)
+    # subIMU = rospy.Subscriber("/imu_filter/rpy/filtered", Vector3Stamped, cbIMU)
+        # subGPS = rospy.Subscriber("/outdoor_waypoint_nav/gps/filtered", NavSatFix, cbGPS)
+    # subOdom = rospy.Subscriber("/outdoor_waypoint_nav/odometry/filtered_map", Odometry, cbOdom)
 
     print("successfully initialized!")
     
