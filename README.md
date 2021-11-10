@@ -30,6 +30,7 @@ What/How
 .
 ├── demo.md  
 ├── demo.sh
+├── bringup_mower.sh  # for set_datum
 ├── jupyterNotebook
 │   ├── Automatic_tree_detection.ipynb
 │   ├── icp_svd.ipynb # center of trunk match iteration (quite same as Automatic_xxx)
@@ -53,7 +54,7 @@ What/How
 ├── requirements.txt
 ├── scripts
 │   ├── calib_extrinsic.py
-│   ├── capture_depth.py
+│   ├── navsat_tf.py  # use /navsat/fix as tf 
 │   ├── cb_pose.py
 │   ├── cb_topic2npy.py
 │   ├── check_depth.py

@@ -24,7 +24,7 @@ if sys.platform.startswith('linux'): # or win
 # bag_name = '210906_loopClosure/' #'ntu_test3_2021-07-25-18-23-39/'
 directory = '/home/ncslaber/110-1/211002_allLibrary/'
 bag_name = '2021-10-03-17-48-23_back-left-2/'
-file_path = '/home/ncslaber/110-1/211002_allLibrary/1007-roughly-builtmap/' #directory+bag_name
+file_path = '/home/ncslaber/110-1/211027_CACS_prep/' #directory+bag_name
 shp_path = file_path + 'shapefiles/'
 os.makedirs(os.path.dirname(file_path), exist_ok=True)
 os.makedirs(os.path.dirname(shp_path), exist_ok=True)
@@ -129,7 +129,7 @@ def get_merging_circle(raw_pgm_binary, filter_labels_list):
             else:
                 break
         centroid_filteredList.append(centroid)
-        cv2.circle(circle_bd, (int(centroid[1]),int(centroid[0])), int(centroid[2]), 150, 2) # radius is 8 pixel
+        cv2.circle(circle_bd, (int(centroid[1]),int(centroid[0])), int(centroid[2]), 150, 3) # radius is 8 pixel
         # cv2.putText(circle_bd, #numpy array on which text is written
         #             str(int(centroid[0]))+','+str(int(centroid[1]))+','+str(int(centroid[2])), #text
         #             (int(centroid[1])-20,int(centroid[0])-20), #position at which writing has to start
@@ -140,7 +140,12 @@ def get_merging_circle(raw_pgm_binary, filter_labels_list):
     circle_bd[raw_pgm_binary==255]=255
     fig2,ax2 = plt.subplots(figsize=(15,15))
     plt.imshow(cv2.cvtColor(circle_bd, cv2.COLOR_BGR2RGB))
-    cv2.imwrite(file_path+'filtered_circle_bd.png', circle_bd)
+    tmp = np.zeros((circle_bd.shape[0],circle_bd.shape[1],3))
+    
+    tmp[circle_bd==0,:]=(255,255,255)
+    tmp[circle_bd==255,:]=(100,100,100)
+    tmp[circle_bd==150,:]=(0,0,255)
+    cv2.imwrite(file_path+'filtered_circle_bd_color.png', tmp)
 
     np.save(file_path+'centroid_filteredList', centroid_filteredList)
 
@@ -161,7 +166,7 @@ def get_utm_negBDs_from_center(index, cX_m, cY_m, cR_m, utm_x_ref, utm_y_ref):
     piece_rad = np.pi/(number_of_point/2)
     neg_bd = []
     for i in range(number_of_point):
-        neg_bd.append((cX_m+cR_m*np.cos(piece_rad*i)+utm_x_ref, cY_m+cR_m*np.sin(piece_rad*i)+utm_y_ref))
+        neg_bd.append((cX_m+(cR_m+0.5)*np.cos(piece_rad*i)+utm_x_ref, cY_m+(cR_m+0.5)*np.sin(piece_rad*i)+utm_y_ref))
     neg_bd = np.asarray(neg_bd)
     plt.scatter(neg_bd[:,0], neg_bd[:,1], c='b', s=10)
     plt.scatter(cX_m+utm_x_ref, cY_m+utm_y_ref, c='g')
@@ -183,7 +188,7 @@ def save_shp(index, neg_bd):
 
 def draw_click_circle(event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDBLCLK:
-            cv2.circle(raw_pgm, (x, y), 20, 255, -1)
+            cv2.circle(raw_pgm, (x, y), 10, 255, -1)
 
 def reduce_noise(raw_pgm):
     print("manually reduce noise---")
@@ -199,8 +204,8 @@ def reduce_noise(raw_pgm):
 
 if __name__=="__main__":
     ''' read map '''
-    # raw_pgm = cv2.imread(file_path+"middle-right.pgm")
-    raw_pgm = cv2.imread(file_path+"1007-map.png")
+    # raw_pgm = cv2.imread(file_path+"Dahu_free_space.pgm")
+    raw_pgm = cv2.imread(file_path+"raw_modified.png")
     if raw_pgm is None:
         print("Image is empty!!")
     raw_pgm = cv2.cvtColor(raw_pgm, cv2.COLOR_RGB2GRAY)
@@ -269,7 +274,7 @@ if __name__=="__main__":
         neg_bd = np.load(shp_path+'neg_'+str(i+1)+'_bd_utm.npy')
         plt.scatter(neg_bd[:,0], neg_bd[:,1], c='b')
 
-    r = shapefile.Reader('/home/ncslaber/shapefiles/test/pos/pos_NTU_left')
+    r = shapefile.Reader('/home/ncslaber/shapefiles/test/pos/pos_Dahu_enlarge')
     pos_bd = r.shape(0).points
     pos_bd = np.asarray(pos_bd)
     ux, uy = proj(pos_bd[:,1], pos_bd[:,0])
