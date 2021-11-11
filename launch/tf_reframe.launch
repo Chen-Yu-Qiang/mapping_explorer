@@ -1,7 +1,7 @@
 <launch>
   <arg name="bag_filename"  default="/home/ncslaber/110-1/211002_allLibrary/image_bag/2021-10-02-17-03-14.bag"/>
 
-  <node name="playbag" pkg="rosbag" type="play" args="--clock $(arg bag_filename)" output="screen"> <!---r 0.5-->>
+  <node name="playbag" pkg="rosbag" type="play" args="--clock -r 1.2 $(arg bag_filename)" output="screen"> <!---r 0.5-->>
     <remap from="tf" to="tf_in" />
   </node>
 
