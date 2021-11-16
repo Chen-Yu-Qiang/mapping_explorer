@@ -1,3 +1,5 @@
+'''find trunk(landmark) GPS in a pgm/jpg map'''
+
 '''math tool'''
 import csv
 import numpy as np
