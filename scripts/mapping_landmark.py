@@ -24,9 +24,9 @@ if sys.platform.startswith('linux'): # or win
 
 # directory = '/home/ncslaber/mapping_node/mapping_ws/src/mapping_explorer/NTU_allMaps/'
 # bag_name = '210906_loopClosure/' #'ntu_test3_2021-07-25-18-23-39/'
-directory = '/home/ncslaber/110-1/211002_allLibrary/'
-bag_name = '2021-10-03-17-48-23_back-left-2/'
-file_path = '/home/ncslaber/110-1/211027_CACS_prep/' #directory+bag_name
+# directory = '/home/ncslaber/110-1/211002_allLibrary/'
+# bag_name = '2021-10-03-17-48-23_back-left-2/'
+file_path = '/home/ncslaber/110-1/211002_allLibrary/2021-07-25-18-23-39/1116_test2_after_preprocess/' #directory+bag_name
 shp_path = file_path + 'shapefiles/'
 os.makedirs(os.path.dirname(file_path), exist_ok=True)
 os.makedirs(os.path.dirname(shp_path), exist_ok=True)
@@ -57,7 +57,7 @@ def morph_map(raw_pgm, raw_pgm_binary):
 def filter_labels(num_objects, labels):
     filter_labels_list = []
     for i in range(num_objects):
-        if len(labels[labels==i])>20 and len(labels[labels==i])<800:
+        if len(labels[labels==i])>21 and len(labels[labels==i])<1000:
             filter_labels_list.append(i)
     return filter_labels_list
 
@@ -68,10 +68,12 @@ def get_matched_circle(raw_pgm_binary, filter_labels_list):
         A = []
         for x in range(raw_pgm_binary.shape[0]):
             for y in range(raw_pgm_binary.shape[1]):
+                # if labels[x][y] == 23 or labels[x][y] == 41:
+                #     A.append(np.array([-x/(x*x+y*y), -y/(x*x+y*y), -1/(x*x+y*y)]))
                 if labels[x][y] == i:
                     A.append(np.array([-x/(x*x+y*y), -y/(x*x+y*y), -1/(x*x+y*y)]))
         A = np.asarray(A)
-        print('new one circle # of points: ', A.shape)
+        print('new one circle # of points: ', A.shape, i)
         
         k = np.linalg.inv(A.T @ A)
         k = k @ A.T
@@ -168,7 +170,7 @@ def get_utm_negBDs_from_center(index, cX_m, cY_m, cR_m, utm_x_ref, utm_y_ref):
     piece_rad = np.pi/(number_of_point/2)
     neg_bd = []
     for i in range(number_of_point):
-        neg_bd.append((cX_m+(cR_m+0.5)*np.cos(piece_rad*i)+utm_x_ref, cY_m+(cR_m+0.5)*np.sin(piece_rad*i)+utm_y_ref))
+        neg_bd.append((cX_m+(cR_m+0.3)*np.cos(piece_rad*i)+utm_x_ref, cY_m+(cR_m+0.3)*np.sin(piece_rad*i)+utm_y_ref))
     neg_bd = np.asarray(neg_bd)
     plt.scatter(neg_bd[:,0], neg_bd[:,1], c='b', s=10)
     plt.scatter(cX_m+utm_x_ref, cY_m+utm_y_ref, c='g')
@@ -190,7 +192,7 @@ def save_shp(index, neg_bd):
 
 def draw_click_circle(event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDBLCLK:
-            cv2.circle(raw_pgm, (x, y), 10, 255, -1)
+            cv2.circle(raw_pgm, (x, y), 6, 255, -1)
 
 def reduce_noise(raw_pgm):
     print("manually reduce noise---")
@@ -206,7 +208,8 @@ def reduce_noise(raw_pgm):
 
 if __name__=="__main__":
     ''' read map '''
-    # raw_pgm = cv2.imread(file_path+"Dahu_free_space.pgm")
+    # file_path = '/home/ncslaber/110-1/211002_allLibrary/2021-10-02-17-29-15/1116_test2_after_preprocess/'
+    # raw_pgm = cv2.imread(file_path+"bl.pgm")
     raw_pgm = cv2.imread(file_path+"raw_modified.png")
     if raw_pgm is None:
         print("Image is empty!!")
@@ -218,7 +221,8 @@ if __name__=="__main__":
     cv2.waitKey(100)
     
     ''' reduce noise '''   
-    # reduce_noise(raw_pgm)
+    # reduce_noise(raw_pgm)#[500:1300,300:1300]
+    
 
     ''' preprocess the map '''
     raw_pgm_binary = np.zeros(raw_pgm.shape[:2],dtype=np.uint8)
@@ -231,11 +235,13 @@ if __name__=="__main__":
 
     filter_labels_list = filter_labels(num_objects, labels)
     print('>>>># of size-filtered  objects:',len(filter_labels_list))
+    # np.save('/home/ncslaber/filter_labels_list', filter_labels_list)
 
     centroid_rawList = get_matched_circle(raw_pgm_binary, filter_labels_list)
     
     '''merge close trunk by repeatedly move average'''
     centroid_filteredList = get_merging_circle(raw_pgm_binary, filter_labels_list)
+    # centroid_filteredList = np.load(file_path+'centroid_filteredList.npy')
     print('>>>># of dist-filtered  objects:',len(centroid_filteredList))
     centroid_filteredList = np.asarray(centroid_filteredList)
     centre_x_list = centroid_filteredList[:,0]
@@ -243,9 +249,10 @@ if __name__=="__main__":
     radius_list = centroid_filteredList[:,2]
 
     ''' find neg bds of trunk '''
-    lng, lat, zone, R = get_init_utm()
-    proj = Proj(proj='utm', zone=zone, ellps='WGS84', preserve_units=False)
-    utm_x_ref, utm_y_ref = proj(lng, lat)
+    # lng, lat, zone, R = get_init_utm()
+    # proj = Proj(proj='utm', zone=zone, ellps='WGS84', preserve_units=False)
+    # utm_x_ref, utm_y_ref = proj(lng, lat)
+    utm_x_ref, utm_y_ref = 352865.3782908574, 2767645.5600058394
     
     fig2,ax2 = plt.subplots(figsize=(7,5))
     for j in range(centre_x_list.shape[0]):
@@ -257,7 +264,7 @@ if __name__=="__main__":
         neg_bd = get_utm_negBDs_from_center(j, cX_m, cY_m, cR_m, utm_x_ref, utm_y_ref)
         
         '''each negs save one shp'''
-        save_shp(j,neg_bd)
+        # save_shp(j,neg_bd)
 
     plt.ylabel('UTM Y [m]', fontsize=22)
     plt.xticks(fontsize=18 )
@@ -276,13 +283,13 @@ if __name__=="__main__":
         neg_bd = np.load(shp_path+'neg_'+str(i+1)+'_bd_utm.npy')
         plt.scatter(neg_bd[:,0], neg_bd[:,1], c='b')
 
-    r = shapefile.Reader('/home/ncslaber/shapefiles/test/pos/pos_Dahu_enlarge')
-    pos_bd = r.shape(0).points
-    pos_bd = np.asarray(pos_bd)
-    ux, uy = proj(pos_bd[:,1], pos_bd[:,0])
-    plt.plot(ux,uy,'-o',c='black',label='preset positive bd')
-    ax3.get_xaxis().get_major_formatter().set_useOffset(
-            round(min(ux) / 1000, 2)*1000)
+    # r = shapefile.Reader('/home/ncslaber/shapefiles/test/pos/pos_Dahu_enlarge')
+    # pos_bd = r.shape(0).points
+    # pos_bd = np.asarray(pos_bd)
+    # ux, uy = proj(pos_bd[:,1], pos_bd[:,0])
+    # plt.plot(ux,uy,'-o',c='black',label='preset positive bd')
+    # ax3.get_xaxis().get_major_formatter().set_useOffset(
+    #         round(min(ux) / 1000, 2)*1000)
     plt.ylabel('UTM Y [m]', fontsize=22)
     plt.xticks(fontsize=18 )
     plt.xlabel('UTM X [m]', fontsize=22)
