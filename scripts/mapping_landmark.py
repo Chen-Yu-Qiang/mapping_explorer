@@ -26,7 +26,8 @@ if sys.platform.startswith('linux'): # or win
 # bag_name = '210906_loopClosure/' #'ntu_test3_2021-07-25-18-23-39/'
 # directory = '/home/ncslaber/110-1/211002_allLibrary/'
 # bag_name = '2021-10-03-17-48-23_back-left-2/'
-file_path = '/home/ncslaber/110-1/211002_allLibrary/2021-10-02-17-54-09/1116_test2_after_preprocess/' #directory+bag_name
+file_path = '/home/ncslaber/110-1/211002_allLibrary/2021-10-09-16-49-04/1116_test2_after_preprocess/' #directory+bag_name
+# file_path = '/home/ncslaber/110-1/211009_allLibrary/middle-right/'
 shp_path = file_path + 'shapefiles/'
 os.makedirs(os.path.dirname(file_path), exist_ok=True)
 os.makedirs(os.path.dirname(shp_path), exist_ok=True)
@@ -192,7 +193,7 @@ def save_shp(index, neg_bd):
 
 def draw_click_circle(event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDBLCLK:
-            cv2.circle(raw_pgm, (x+300, y+500), 6, 255, -1)
+            cv2.circle(raw_pgm, (x+500, y+500), 6, 255, -1)
 
 def reduce_noise(raw_pgm):
     print("manually reduce noise---")
@@ -209,8 +210,8 @@ def reduce_noise(raw_pgm):
 if __name__=="__main__":
     ''' read map '''
     # file_path = '/home/ncslaber/110-1/211002_allLibrary/2021-10-02-17-29-15/1116_test2_after_preprocess/'
-    raw_pgm = cv2.imread(file_path+"1118.pgm")
-    # raw_pgm = cv2.imread(file_path+"raw_modified.png")
+    # raw_pgm = cv2.imread(file_path+"middle-right.pgm")
+    raw_pgm = cv2.imread(file_path+"raw_modified.png")
     if raw_pgm is None:
         print("Image is empty!!")
     raw_pgm = cv2.cvtColor(raw_pgm, cv2.COLOR_RGB2GRAY)
@@ -221,7 +222,7 @@ if __name__=="__main__":
     cv2.waitKey(100)
     
     ''' reduce noise '''   
-    # reduce_noise(raw_pgm[500:1300,300:1600])#
+    # reduce_noise(raw_pgm[500:1300,500:1600])#
     
 
     ''' preprocess the map '''
@@ -252,7 +253,7 @@ if __name__=="__main__":
     # lng, lat, zone, R = get_init_utm()
     # proj = Proj(proj='utm', zone=zone, ellps='WGS84', preserve_units=False)
     # utm_x_ref, utm_y_ref = proj(lng, lat)
-    utm_x_ref, utm_y_ref = 352878.8862176978, 2767708.6000474878
+    utm_x_ref, utm_y_ref = 352892.586380602, 2767701.366584974
     
     fig2,ax2 = plt.subplots(figsize=(7,5))
     for j in range(centre_x_list.shape[0]):
