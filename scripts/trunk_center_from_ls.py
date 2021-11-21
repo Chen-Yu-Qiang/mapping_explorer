@@ -9,10 +9,17 @@ from mapping_explorer.msg import Trunkset, Trunkinfo
 import numpy as np
 import math
 import sys
+import json
+import csv
 
-
+# json_object = json.dumps(ip_dict, indent=4)      
+# with open(file_name[:len(file_name)-7]+'.json', 'a+') as outfile:
+#     outfile.write(json_object)
+count = 0
+file_name = '/home/ncslaber/110-1/211009_allLibrary/front-right/syn_rosbag/found_trunk/'
 def cbLaser(msg):
-    print("enter!")
+    global count,file_name
+    # print("enter!")
     '''classify different trunk points'''
     obj_dict = {}
     num_objects = 0
@@ -32,6 +39,11 @@ def cbLaser(msg):
             terminator = False
             num_objects += 1
             obj_dict[num_objects] = []
+        
+    json_object = json.dumps(obj_dict, indent=4)      
+    with open(file_name+str(count)+'.json', 'a+') as outfile:
+        outfile.write(json_object)
+    count += 1   
 
     '''circle matching'''
     centre_x_list = []
@@ -49,7 +61,7 @@ def cbLaser(msg):
         
         x = np.array(obj_dict[i])[:,0]
         y = np.array(obj_dict[i])[:,1]
-        A.append(np.array([-x/(x*x+y*y), -y/(x*x+y*y), -1/(x*x+y*y)]))
+        A.append(np.array( [-x/(x*x+y*y), -y/(x*x+y*y), -1/(x*x+y*y)] ))
         A = np.asarray(A)[0]
         A = A.T
         # print(A.shape)
@@ -63,25 +75,44 @@ def cbLaser(msg):
         centre_y = k[1][0]/(-2)
         radius_r = np.sqrt(centre_x*centre_x+centre_y*centre_y-k[2][0])
         
-        trunkinfo.x = round(centre_x, 3)
-        trunkinfo.z = round(centre_y, 3)
+        distance = math.hypot(centre_x,centre_y)
+        theta = math.atan2(-centre_x,centre_y)
+        trunkinfo.d = round(distance, 3)
+        trunkinfo.t = round(theta, 3)
         trunkinfo.r = round(radius_r, 3)
         trunkSet.aframe.append(trunkinfo)
 
-        print(round(centre_x, 3), round(centre_y, 3), round(radius_r, 3))
+        # print(round(distance, 3), round(distance, 3), round(radius_r, 3))
         # centre_x_list.append(round(centre_x, 3))
         # centre_y_list.append(round(centre_y, 3))
         # radius_r_list.append(round(radius_r, 3))
 
+    pubTrunk.publish(trunkSet) 
+
     
-    pubTrunk.publish(trunkSet)    
+
+def cbTrunk(msg):
+    global count
+    print( 'callback!' )
+    while( len(msg.aframe) ):
+        inAframe = msg.aframe.pop()
+        distance = inAframe.d
+        theta = inAframe.t
+        radius = inAframe.r
+
+        with open(file_name+str(count)+'.csv', 'a+') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([round(distance, 3), round(theta, 3), round(radius, 3)])
+        
+
     
 
 if __name__ == "__main__":
     print("Python version: ",sys.version)
     rospy.init_node("laserHandler", anonymous=True)
     subLaser = rospy.Subscriber("/scan_filtered", LaserScan, cbLaser)
-    pubTrunk = rospy.Publisher("/wow/trunk_info", Trunkset, queue_size=100)
+    pubTrunk = rospy.Publisher("/wow/trunk_info", Trunkset, queue_size=1)
+    subTrunk = rospy.Subscriber("/wow/trunk_info", Trunkset, cbTrunk)
     
     print("successfully initialized!")
     rospy.spin()
