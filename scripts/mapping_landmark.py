@@ -26,7 +26,7 @@ if sys.platform.startswith('linux'): # or win
 # bag_name = '210906_loopClosure/' #'ntu_test3_2021-07-25-18-23-39/'
 # directory = '/home/ncslaber/110-1/211002_allLibrary/'
 # bag_name = '2021-10-03-17-48-23_back-left-2/'
-file_path = '/home/ncslaber/110-1/211002_allLibrary/2021-10-09-16-49-04/1116_test2_after_preprocess/' #directory+bag_name
+file_path = '/home/ncslaber/110-1/211009_allLibrary/2021-10-09-17-26-07/1121_test2_after_preprocess/' #directory+bag_name
 # file_path = '/home/ncslaber/110-1/211009_allLibrary/middle-right/'
 shp_path = file_path + 'shapefiles/'
 os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -58,7 +58,7 @@ def morph_map(raw_pgm, raw_pgm_binary):
 def filter_labels(num_objects, labels):
     filter_labels_list = []
     for i in range(num_objects):
-        if len(labels[labels==i])>10 and len(labels[labels==i])<1000:
+        if len(labels[labels==i])>10 and len(labels[labels==i])<2000:
             filter_labels_list.append(i)
     return filter_labels_list
 
@@ -253,7 +253,7 @@ if __name__=="__main__":
     # lng, lat, zone, R = get_init_utm()
     # proj = Proj(proj='utm', zone=zone, ellps='WGS84', preserve_units=False)
     # utm_x_ref, utm_y_ref = proj(lng, lat)
-    utm_x_ref, utm_y_ref = 352892.586380602, 2767701.366584974
+    utm_x_ref, utm_y_ref = 352874.44270703295, 2767715.6644646297
     
     fig2,ax2 = plt.subplots(figsize=(7,5))
     for j in range(centre_x_list.shape[0]):

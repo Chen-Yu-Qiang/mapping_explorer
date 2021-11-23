@@ -52,6 +52,7 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    Trunkinfo.msg
    Trunkset.msg
+   Correspondence.msg
  )
 
 ## Generate services in the 'srv' folder
