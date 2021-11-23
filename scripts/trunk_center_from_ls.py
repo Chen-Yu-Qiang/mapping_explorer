@@ -16,17 +16,13 @@ import json
 import csv
 import time
 
-# count = 0
-# file_name = '/home/ncslaber/110-1/211009_allLibrary/front-right/syn_rosbag/found_trunk/'
-
-
 
 '''load trunk map in UTM coordinate'''
 list_trunkMap = np.load('center_list_all.npy')
 lm_x = list_trunkMap[:,0] 
 lm_y = list_trunkMap[:,1] 
 lm_radi = list_trunkMap[:,2]
-robot_utm = np.array( [1,1,0] ) #None
+robot_utm = None
 P = np.vstack((lm_x, lm_y))
 
 def transform2utm_from_camera(cX_m_loc, cY_m_loc, robot_utm):
@@ -36,11 +32,11 @@ def transform2utm_from_camera(cX_m_loc, cY_m_loc, robot_utm):
 
     return cX_utm_loc, cY_utm_loc
 
-
+count = 0
 def cbLaser(msg):
     start = time.time()
     # global count,file_name
-    global P, robot_utm
+    global P, robot_utm, count
     # print("enter!")
     '''classify different trunk points'''
     obj_dict = {}
@@ -88,6 +84,7 @@ def cbLaser(msg):
     trunkSet = Trunkset()
     list_obs_utm_x = []
     list_obs_utm_y = []
+    list_obs_utm_r = []
     for i in range(1,num_objects+1):
         # match_circle_from_xz(num_objects, obj_dict)
         trunkinfo = Trunkinfo()
@@ -104,15 +101,10 @@ def cbLaser(msg):
         if A.shape[0] < 10:             
             continue
         
-<<<<<<< HEAD
-        k = np.linalg.inv( np.dot(A.T, A) ) 
-        k = np.dot(k, A.T)
-        k = np.dot( k, np.ones((k.shape[1],1)) ) 
-=======
         k = np.linalg.inv( np.dot(A.T, A) )
         k = np.dot(k, A.T)
         k = np.dot(k, np.ones((k.shape[1],1)))
->>>>>>> 9559fa413cd1ea2b2b75c0ff173a9cc784453041
+
         centre_x = k[0][0]/(-2)
         centre_y = k[1][0]/(-2)
         radius_r = np.sqrt(centre_x*centre_x+centre_y*centre_y-k[2][0])
@@ -120,6 +112,7 @@ def cbLaser(msg):
         obs_utm_x, obs_utm_y = transform2utm_from_camera(centre_x, centre_y, robot_utm)
         list_obs_utm_x.append(obs_utm_x)
         list_obs_utm_y.append(obs_utm_y)
+        list_obs_utm_r.append(radius_r)
         
         distance = math.hypot(centre_x,centre_y)
         theta = math.atan2(-centre_x,centre_y)
@@ -133,8 +126,12 @@ def cbLaser(msg):
         correspondence = Correspondence()
         
         U = np.vstack((list_obs_utm_x, list_obs_utm_y)) 
-        correspondence = icp.get_Rt_by_ICP(P,U)
+        correspondence, U_new = icp.get_Rt_by_ICP(P,U)
         pubCorres.publish(correspondence)
+        # plot_utils.plot_traj_for_demo((obs_lm_x, obs_lm_y, obs_lm_radi),(lm_x,lm_y,lm_radi),\
+        #                 np_z_hat, np_z_true, (bel_x, bel_y, bel_theta), (real_x, real_y, real_tehta), cols, icp_flag)
+        # plot_utils.plot_traj_for_demo((list_obs_utm_x, list_obs_utm_y, list_obs_utm_r),(lm_x,lm_y,lm_radi),\
+        #                 np_z_hat, np_z_true, (bel_x, bel_y, bel_theta), (real_x, real_y, real_tehta), cols, icp_flag)
 
     pubTrunk.publish(trunkSet) 
     

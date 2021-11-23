@@ -104,4 +104,4 @@ def get_Rt_by_ICP(P,U): #, robot_xy, theta
             print("iterate over 5 times!!")
             break
 
-    return cols 
+    return cols, U_new 

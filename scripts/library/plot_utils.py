@@ -161,16 +161,17 @@ def plot_traj(urs_states, belief_states, markers, markers_in_map, index, np_z_ha
     plt.show()
     # fig.savefig('/home/ncslaber/110-1/210922_EKF-fusion-test/zigzag_bag_image/'+str(index)+'.png')
 
-def plot_traj_for_sim(true_states, belief_states, markers, markers_in_map, index, np_z_hat, np_z_true, bel_pose, real_pose, cols, icp_flag):
-    x_tr, y_tr, th_tr = true_states
+def plot_traj_for_sim(gps_states, belief_states, markers, markers_in_map, np_z_hat, np_z_true, bel_pose, real_pose, cols, icp_flag):
+    x_gps, y_gps, th_gps = gps_states
     x_guess, y_guess, theta_guess = belief_states
     # x_tr_lm, y_tr_lm, th_tr_lm = lm_states
 
     radius = 0.5
     
-    world_bounds = [-15,10]
+    world_bounds_x = [352840,352870]
+    world_bounds_y = [2767700,2767730]
     fig, ax = plt.subplots(figsize=(10,10),dpi=120)
-    ax = plt.axes(xlim=world_bounds, ylim=world_bounds)
+    ax = plt.axes(xlim=world_bounds_x, ylim=world_bounds_y)
     ax.set_aspect('equal')
 
     '''plot landmarkers'''
@@ -187,20 +188,16 @@ def plot_traj_for_sim(true_states, belief_states, markers, markers_in_map, index
         plt.scatter(neg_bd[:,0], neg_bd[:,1], c='k', s=10)
 
     '''plot traj'''
-    plt.scatter(x_tr[0], y_tr[0], color='b', label="Actual", s=10)
-    
+    plt.scatter(x_gps[0], y_gps[0], color='b', label="GPS", s=10)
       
     '''plot final state'''
-    plt.scatter(x_tr[0][index],y_tr[0][index], s=300, color='lightblue', ec='k', label='Actual pose')
-    plt.plot( [x_tr[0][index], x_tr[0][index] + radius*cos(th_tr[0][index]) ], 
-               [y_tr[0][index], y_tr[0][index] + radius*sin(th_tr[0][index]) ], color='k' )
-    plt.scatter(x_guess[0][index],y_guess[0][index], s=500, color='y', ec='k', label='Predicted pose')
-    plt.plot( [x_guess[0][index], x_guess[0][index] + radius*cos(theta_guess[0][index]) ], 
-              [y_guess[0][index], y_guess[0][index] + radius*sin(theta_guess[0][index]) ], color='k' )
-    # plt.scatter(x_tr_lm[0][index],y_tr_lm[0][index], s=400, color='lightblue', ec='k', label='landmark pose')
-    # plt.plot( [x_tr_lm[0][index], x_tr_lm[0][index] + radius*cos(th_tr_lm[0][index]) ], 
-    #           [y_tr_lm[0][index], y_tr_lm[0][index] + radius*sin(th_tr_lm[0][index]) ], color='k' )
-
+    # plt.scatter(x_tr[0][index],y_tr[0][index], s=300, color='lightblue', ec='k', label='Actual pose')
+    # plt.plot( [x_tr[0][index], x_tr[0][index] + radius*cos(th_tr[0][index]) ], 
+    #            [y_tr[0][index], y_tr[0][index] + radius*sin(th_tr[0][index]) ], color='k' )
+    plt.scatter(x_guess[0][-1],y_guess[0][-1], s=500, color='y', ec='k', label='Predicted pose')
+    plt.plot( [x_guess[0][-1], x_guess[0][-1] + radius*cos(theta_guess[0][-1]) ], 
+              [y_guess[0][-1], y_guess[0][-1] + radius*sin(theta_guess[0][-1]) ], color='k' )
+    
     '''plot observation z'''
     plot_measured_landmarks(np_z_hat, np_z_true, bel_pose, real_pose)
     if icp_flag == True:
@@ -212,13 +209,68 @@ def plot_traj_for_sim(true_states, belief_states, markers, markers_in_map, index
     for i in range( len(markers[0]) ):
         plt.plot([ markers[0][i],x_tr[0][index] ],
                 [ markers[1][i],y_tr[0][index] ], color='k')'''
-    plt.scatter(x_guess[0][:index+1], y_guess[0][:index+1], color='r', label="Predicted", s=10)
-    plt.title('update times: '+str(index)+'/200', fontsize=25)
+    # plt.scatter(x_guess[0][:index+1], y_guess[0][:index+1], color='r', label="Predicted", s=10)
+    # plt.title('update times: '+str(index)+'/200', fontsize=25)
     plt.yticks(fontsize=20)
     plt.xticks(fontsize=20)
     plt.legend(fontsize=15)
     plt.show()
     # fig.savefig('/home/ncslaber/class_material/EKF_localization_with_unknown_correspondences/images/sample_5_times/'+str(index)+'.png')
+
+def plot_traj_for_demo(markers, markers_in_map, np_z_hat, np_z_true, bel_pose, real_pose, cols, icp_flag):
+    # x_gps, y_gps, th_gps = gps_states
+    # x_guess, y_guess, theta_guess = belief_states
+    
+    radius = 0.5
+    
+    world_bounds_x = [352840,352870]
+    world_bounds_y = [2767700,2767730]
+    fig, ax = plt.subplots(figsize=(10,10),dpi=120)
+    ax = plt.axes(xlim=world_bounds_x, ylim=world_bounds_y)
+    ax.set_aspect('equal')
+
+    '''plot landmarkers'''
+    plt.scatter(markers_in_map[0], markers_in_map[1], marker='X',s=100, color='g', label='ref landmarks')
+    plt.scatter(markers[0], markers[1], marker='X',s=100, color='r', label='real_obs landmarks')
+    number_of_point=12
+    piece_rad = np.pi/(number_of_point/2)
+    
+    for j in range( len(markers_in_map[0]) ):
+        neg_bd = []
+        for i in range(number_of_point):
+            neg_bd.append((markers_in_map[0][j]+markers_in_map[2][j]*np.cos(piece_rad*i), markers_in_map[1][j]+markers_in_map[2][j]*np.sin(piece_rad*i)))
+        neg_bd=np.asarray(neg_bd)
+        plt.scatter(neg_bd[:,0], neg_bd[:,1], c='k', s=10)
+
+    '''plot traj'''
+    plt.scatter(bel_pose[0], bel_pose[1], color='b', label="GPS", s=10)
+      
+    '''plot final state'''
+    # plt.scatter(x_tr[0][index],y_tr[0][index], s=300, color='lightblue', ec='k', label='Actual pose')
+    # plt.plot( [x_tr[0][index], x_tr[0][index] + radius*cos(th_tr[0][index]) ], 
+    #            [y_tr[0][index], y_tr[0][index] + radius*sin(th_tr[0][index]) ], color='k' )
+    # plt.scatter(x_guess[0][-1],y_guess[0][-1], s=500, color='y', ec='k', label='Predicted pose')
+    # plt.plot( [x_guess[0][-1], x_guess[0][-1] + radius*cos(theta_guess[0][-1]) ], 
+    #           [y_guess[0][-1], y_guess[0][-1] + radius*sin(theta_guess[0][-1]) ], color='k' )
+    
+    '''plot observation z'''
+    plot_measured_landmarks(np_z_hat, np_z_true, bel_pose, real_pose)
+    if icp_flag == True:
+        plt.text(3.0, 8, 'icp matched points: '+str(cols),fontsize=14)
+    else:
+        plt.text(3.0, 8, 'maximum matched point',fontsize=14)
+
+    '''plot obs lm
+    for i in range( len(markers[0]) ):
+        plt.plot([ markers[0][i],x_tr[0][index] ],
+                [ markers[1][i],y_tr[0][index] ], color='k')'''
+    # plt.scatter(x_guess[0][:index+1], y_guess[0][:index+1], color='r', label="Predicted", s=10)
+    # plt.title('update times: '+str(index)+'/200', fontsize=25)
+    plt.yticks(fontsize=20)
+    plt.xticks(fontsize=20)
+    plt.legend(fontsize=15)
+    plt.show()
+    
 
 def plot_measured_landmarks(np_z_hat, np_z_true, bel_pose, updated_pose):
     bel_x, bel_y, bel_theta = bel_pose
