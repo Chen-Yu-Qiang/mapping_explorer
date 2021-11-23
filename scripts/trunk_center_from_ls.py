@@ -36,14 +36,7 @@ def transform2utm_from_camera(cX_m_loc, cY_m_loc, robot_utm):
 
     return cX_utm_loc, cY_utm_loc
 
-<<<<<<< HEAD
-=======
-# json_object = json.dumps(ip_dict, indent=4)      
-# with open(file_name[:len(file_name)-7]+'.json', 'a+') as outfile:
-#     outfile.write(json_object)
-count = 0
-# file_name = '/home/anny/110-1/211009_allLibrary/measure/'
->>>>>>> 9559fa413cd1ea2b2b75c0ff173a9cc784453041
+
 def cbLaser(msg):
     start = time.time()
     # global count,file_name
