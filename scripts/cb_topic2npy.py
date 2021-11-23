@@ -1,4 +1,4 @@
-#!usr/bin/env python3
+#!/usr/bin/env python
 '''ros utils'''
 import rospy
 from sensor_msgs.msg import Image, CameraInfo, NavSatFix
@@ -10,9 +10,9 @@ import csv
 import sys
 import os
 
-file_path = './syn_rosbag/'
-os.makedirs(os.path.dirname(file_path+ "depth/"), exist_ok=True)
-os.makedirs(os.path.dirname(file_path+ "color/"), exist_ok=True)
+file_path = '/home/anny/110-1/211009_allLibrary/measure/'
+os.makedirs(os.path.dirname(file_path+ "depth/"))
+os.makedirs(os.path.dirname(file_path+ "color/"))
 
 def msg2CV(msg):
     bridge = CvBridge()
@@ -69,10 +69,10 @@ class Synchronize:
                 self.imgColor = msg2CV(self.msgColor)
                 self.imgDepth = msg2CV(self.msgDepth)
                 
-                # np.save(file_path + "depth/" + str(int(self.file_index/10)), self.imgDepth) 
-                # np.save(file_path + "color/" + str(int(self.file_index/10)), self.imgColor)
-                np.save(file_path + "depth/circling" , self.imgDepth) 
-                np.save(file_path + "color/circling" , self.imgColor)
+                np.save(file_path + "depth/" + str(int(self.file_index)), self.imgDepth) 
+                np.save(file_path + "color/" + str(int(self.file_index)), self.imgColor)
+                # np.save(file_path + "depth/circling" , self.imgDepth) 
+                # np.save(file_path + "color/circling" , self.imgColor)
                 
                 # yaw_rad = self.msgIMU/180*np.pi
                 # with open(file_path + 'cb_pose.csv', 'a') as csvfile: # or w
@@ -84,7 +84,7 @@ class Synchronize:
 
                 print("saved!")
             #     self.flagSaved = True
-            # self.file_index += 1
+                self.file_index += 1
 
                         
         # else: 

@@ -36,6 +36,14 @@ def transform2utm_from_camera(cX_m_loc, cY_m_loc, robot_utm):
 
     return cX_utm_loc, cY_utm_loc
 
+<<<<<<< HEAD
+=======
+# json_object = json.dumps(ip_dict, indent=4)      
+# with open(file_name[:len(file_name)-7]+'.json', 'a+') as outfile:
+#     outfile.write(json_object)
+count = 0
+# file_name = '/home/anny/110-1/211009_allLibrary/measure/'
+>>>>>>> 9559fa413cd1ea2b2b75c0ff173a9cc784453041
 def cbLaser(msg):
     start = time.time()
     # global count,file_name
@@ -44,22 +52,39 @@ def cbLaser(msg):
     '''classify different trunk points'''
     obj_dict = {}
     num_objects = 0
+    discrepancy = 0
     terminator = True
     for i in range(640):
         ls_range = msg.ranges[i]
         if ls_range < 7.0 and not (math.isinf(ls_range)):
-            if i == 0:
-                num_objects += 1
-                obj_dict[num_objects] = []
+            
             theta = msg.angle_max - msg.angle_increment * i
             x_camera = ls_range * np.sin(theta)
             z_camera = ls_range * np.cos(theta)
+
+            if discrepancy != 0:
+                print(discrepancy, count)
+
+            if i == 0:
+                num_objects += 1
+                obj_dict[num_objects] = []
+
+            elif discrepancy < 10 and discrepancy != 0:
+                num_objects -= 1
+                
             obj_dict[num_objects].append([x_camera,z_camera])
+
             terminator = True
+            discrepancy = 0
+
         elif terminator == True:
             terminator = False
             num_objects += 1
             obj_dict[num_objects] = []
+            discrepancy += 1
+
+        elif terminator == False:
+            discrepancy += 1
         
     # json_object = json.dumps(obj_dict, indent=4)      
     # with open(file_name+str(count)+'.json', 'a+') as outfile:
@@ -86,9 +111,15 @@ def cbLaser(msg):
         if A.shape[0] < 10:             
             continue
         
+<<<<<<< HEAD
         k = np.linalg.inv( np.dot(A.T, A) ) 
         k = np.dot(k, A.T)
         k = np.dot( k, np.ones((k.shape[1],1)) ) 
+=======
+        k = np.linalg.inv( np.dot(A.T, A) )
+        k = np.dot(k, A.T)
+        k = np.dot(k, np.ones((k.shape[1],1)))
+>>>>>>> 9559fa413cd1ea2b2b75c0ff173a9cc784453041
         centre_x = k[0][0]/(-2)
         centre_y = k[1][0]/(-2)
         radius_r = np.sqrt(centre_x*centre_x+centre_y*centre_y-k[2][0])
@@ -149,7 +180,4 @@ if __name__ == "__main__":
     print("successfully initialized!")
     rospy.spin()
     
-
-
-
 
